@@ -11,7 +11,7 @@ def build(bld):
             name='tests-base',
             features='cxx',
             source=bld.path.ant_glob(['*.cpp']),
-            use='ndn-next-ndnvideo',
+            use='ndn-next-ndnvideo BOOST',
           )
 
         # unit tests

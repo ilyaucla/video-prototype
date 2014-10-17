@@ -13,14 +13,23 @@ def options(opt):
     ropt.add_option('--with-tests', action='store_true', default=False, dest='with_tests',
                     help='''build unit tests''')
 
+    ropt.add_option('--with-examples', action='store_true', default=False, dest='with_examples',
+                    help='''build examples''')
+
 def configure(conf):
     conf.load("compiler_c compiler_cxx gnu_dirs boost default-compiler-flags")
 
     conf.check_cfg(package='libndn-cxx', args=['--cflags', '--libs'],
                    uselib_store='NDN_CXX', mandatory=True)
+		
+    conf.check_cfg(package='gstreamer-1.0', args=['--cflags', '--libs'],
+                   uselib_store='GSTREAMER', mandatory=True)
 
     if conf.options.with_tests:
         conf.env['WITH_TESTS'] = True
+
+    if conf.options.with_examples:
+        conf.env['WITH_EXAMPLES'] = True
 
     USED_BOOST_LIBS = ['system', 'iostreams', 'filesystem', 'random']
     if conf.env['WITH_TESTS']:
@@ -41,13 +50,18 @@ def build(bld):
         name="ndn-repo-objects",
         features=["cxx", "cxxprogram"],
         source=bld.path.ant_glob(['src/**/*.cpp']),
-        use='NDN_CXX BOOST',
+        use='NDN_CXX BOOST GSTREAMER',
         includes="src",
         export_includes="src",
         )
 
     
     # Tests
-    bld.recurse('tests')
+    if bld.env['WITH_TESTS']:
+	  bld.recurse('tests')
+
+    # Examples
+    if bld.env['WITH_EXAMPLES']:
+	  bld.recurse('examples')
 
     bld.install_files('${SYSCONFDIR}/ndn', 'next-ndnvideo.conf.sample')
