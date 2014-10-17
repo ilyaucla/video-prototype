@@ -22,8 +22,8 @@ def configure(conf):
     conf.check_cfg(package='libndn-cxx', args=['--cflags', '--libs'],
                    uselib_store='NDN_CXX', mandatory=True)
 		
-    conf.check_cfg(package='gstreamer-1.0', args=['--cflags', '--libs'],
-                   uselib_store='GSTREAMER', mandatory=True)
+    conf.check_cfg(package='gstreamer-1.0', args=['--cflags', '--libs'], 
+        cflags=['-Wc++11-extensions'], uselib_store='GSTREAMER', mandatory=True) 
 
     if conf.options.with_tests:
         conf.env['WITH_TESTS'] = True
@@ -46,16 +46,29 @@ def configure(conf):
     conf.write_config_header('src/config.hpp')
 
 def build(bld):
-    bld(target="ndn-next-ndnvideo",
-        name="ndn-repo-objects",
-        features=["cxx", "cxxprogram"],
-        source=bld.path.ant_glob(['src/**/*.cpp']),
+
+#    bld(target="ndn-next-ndnvideo",
+#        name="ndn-repo-objects",
+#        features=["cxx", "cxxprogram"],
+#        source=bld.path.ant_glob(['src/**/*.cpp']),
+#        use='NDN_CXX BOOST GSTREAMER',
+#        includes="src",
+#        export_includes="src",
+#        )
+  
+    bld(target="producer",
+        features=["c", "cxx", "cxxprogram"],
+        source= "src/producer.cpp",
         use='NDN_CXX BOOST GSTREAMER',
-        includes="src",
-        export_includes="src",
         )
 
-    
+    bld(target="consumer",
+        features=["c", "cxx", "cxxprogram"],
+        source= "src/consumer.cpp src/playvideo.cpp",
+        cflags=['-Wc++11-extensions'],
+        use='NDN_CXX BOOST GSTREAMER',
+        )
+
     # Tests
     if bld.env['WITH_TESTS']:
 	  bld.recurse('tests')
