@@ -25,20 +25,21 @@ public:
   void
   processPayload(const uint8_t* buffer, size_t bufferSize)
   {
-    std::string content1((char*)buffer);
     std::cout << "bufferSize " << bufferSize <<std::endl;
-    //std::cout << "CONTENT " << content1 << std::endl;
-
+/*
 		std::string filename = "sequence";
 
 		std::ofstream fout(filename, std::ios::binary);
 		fout.write((char*)buffer, sizeof(char)*bufferSize);
-    
+ */   
     PlayVideo play;
-    play.play_bin_uri(filename);
-    
+   // play.play_bin_uri(filename);
+    printf("Call from buffer!");
+    play.play_bin_appsrc(buffer, bufferSize);
+  /*  
     fout.write("", 0);
 		fout.close();
+    */
   }
   
   void
@@ -94,7 +95,7 @@ main(int argc, char** argv)
 //		sequenceConsumer->setContextOption(SND_BUF_SIZE, 1024*1024*5);
 
 //		sequenceConsumer->setContextOption(RCV_BUF_SIZE, 1024*1024*4);
-		sequenceConsumer->setContextOption(CONTENT_CHUNK_SIZE, 1024*1024*4);
+		sequenceConsumer->setContextOption(CONTENT_CHUNK_SIZE, 1024*1024);
   
     sequenceConsumer->consume(Name());
     

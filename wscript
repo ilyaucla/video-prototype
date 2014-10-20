@@ -23,7 +23,7 @@ def configure(conf):
                    uselib_store='NDN_CXX', mandatory=True)
 		
     conf.check_cfg(package='gstreamer-1.0', args=['--cflags', '--libs'], 
-        cflags=['-Wc++11-extensions'], uselib_store='GSTREAMER', mandatory=True) 
+         uselib_store='GSTREAMER', mandatory=True) 
 
     if conf.options.with_tests:
         conf.env['WITH_TESTS'] = True
@@ -57,15 +57,14 @@ def build(bld):
 #        )
   
     bld(target="producer",
-        features=["c", "cxx", "cxxprogram"],
+        features=["cxx", "cxxprogram"],
         source= "src/producer.cpp",
         use='NDN_CXX BOOST GSTREAMER',
         )
 
     bld(target="consumer",
-        features=["c", "cxx", "cxxprogram"],
+        features=["cxx", "cxxprogram"],
         source= "src/consumer.cpp src/playvideo.cpp",
-        cflags=['-Wc++11-extensions'],
         use='NDN_CXX BOOST GSTREAMER',
         )
 

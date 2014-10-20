@@ -11,6 +11,9 @@ namespace ndn {
   {
   }
 
+  GST_DEBUG_CATEGORY (appsrc_playbin_debug);
+  #define GST_CAT_DEFAULT appsrc_playbin_debug
+
   void
   PlayVideo::play_bin_uri (std::string filename)
   {
@@ -51,6 +54,61 @@ namespace ndn {
     g_object_unref (playbin);
     g_source_remove (bus_watch_id);
     g_main_loop_unref (loop);
+
+  }
+  
+  void
+  PlayVideo::play_bin_appsrc (const uint8_t* buffer, size_t bufferSize)
+  {
+    App *app = &s_app;
+    GstBus *bus;
+
+    gst_init (NULL, NULL);
+
+    GST_DEBUG_CATEGORY_INIT (appsrc_playbin_debug, "appsrc-playbin", 0,
+        "appsrc playbin example");
+
+    /* try to open the file as an mmapped file */
+    /* get some vitals, this will be used to read data from the mmapped file and
+     * feed it to appsrc. */
+    app->length = bufferSize;
+    app->data = (guint8 *) buffer;
+    app->offset = 0;
+
+    /* create a mainloop to get messages */
+    app->loop = g_main_loop_new (NULL, TRUE);
+
+    app->playbin = gst_element_factory_make ("playbin", NULL);
+    g_assert (app->playbin);
+
+    bus = gst_pipeline_get_bus (GST_PIPELINE (app->playbin));
+
+    /* add watch for messages */
+   // gst_bus_add_watch (bus, (GstBusFunc) bus_message, app);
+    gst_bus_add_watch (bus, bus_call, app->loop);
+
+    /* set to read from appsrc */
+    g_object_set (app->playbin, "uri", "appsrc://", NULL);
+
+    /* get notification when the source is created so that we get a handle to it
+     * and can configure it */
+    g_signal_connect (app->playbin, "deep-notify::source",
+        (GCallback) found_source, app);
+
+    /* go to playing and wait in a mainloop. */
+    gst_element_set_state (app->playbin, GST_STATE_PLAYING);
+
+    /* this mainloop is stopped when we receive an error or EOS */
+    g_main_loop_run (app->loop);
+
+    GST_DEBUG ("stopping!");
+
+    gst_element_set_state (app->playbin, GST_STATE_NULL);
+
+    /* free the file */
+
+    gst_object_unref (bus);
+    g_main_loop_unref (app->loop);
 
   }
 
