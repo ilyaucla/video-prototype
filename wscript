@@ -58,13 +58,13 @@ def build(bld):
   
     bld(target="producer",
         features=["cxx", "cxxprogram"],
-        source= "src/producer.cpp",
+        source= "src/producer.cpp src/video-generator.cpp src/producer-callback.cpp",
         use='NDN_CXX BOOST GSTREAMER',
         )
 
     bld(target="consumer",
         features=["cxx", "cxxprogram"],
-        source= "src/consumer.cpp src/playvideo.cpp",
+        source= "src/consumer.cpp src/video-player.cpp src/consumer-callback.cpp",
         use='NDN_CXX BOOST GSTREAMER',
         )
 

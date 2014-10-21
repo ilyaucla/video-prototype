@@ -3,25 +3,25 @@
  * 
  */
 
-#ifndef PLAYVIDEO_HPP
-#define PLAYVIDEO_HPP
+#ifndef VIDEO_PLAYER_HPP
+#define VIDEO_PLAYER_HPP
 
 #include <fstream>
 #include <gst/gst.h>
 
 namespace ndn {
 
-  class PlayVideo
+  class VideoPlayer
   {
     public:
 
-      PlayVideo();
+      VideoPlayer();
 
       void
       play_bin_uri (std::string filename);
 
       void
-      play_bin_appsrc (const uint8_t* buffer, size_t bufferSize);
+      play_bin_appsrc_init (const uint8_t* buffer, size_t bufferSize);
 
       static gboolean
       bus_call (GstBus * bus, GstMessage *msg, gpointer data)
@@ -58,7 +58,6 @@ namespace ndn {
 
     private:
 
-      
       struct _App
       {
         GstElement *playbin;
@@ -134,4 +133,4 @@ namespace ndn {
       }
   };
 } // namespace ndn
-#endif //PLAYVIDEO_HPP
+#endif //VIDEO-PLAYER_HPP

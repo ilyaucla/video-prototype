@@ -3,11 +3,11 @@
  * 
  */
 
-#include "playvideo.hpp"
+#include "video-player.hpp"
 
 namespace ndn {
 
-  PlayVideo::PlayVideo()
+  VideoPlayer::VideoPlayer()
   {
   }
 
@@ -15,7 +15,7 @@ namespace ndn {
   #define GST_CAT_DEFAULT appsrc_playbin_debug
 
   void
-  PlayVideo::play_bin_uri (std::string filename)
+  VideoPlayer::play_bin_uri (std::string filename)
   {
     GstElement *playbin;
     GMainLoop *loop;
@@ -58,7 +58,7 @@ namespace ndn {
   }
   
   void
-  PlayVideo::play_bin_appsrc (const uint8_t* buffer, size_t bufferSize)
+  VideoPlayer::play_bin_appsrc_init (const uint8_t* buffer, size_t bufferSize)
   {
     App *app = &s_app;
     GstBus *bus;
@@ -68,7 +68,6 @@ namespace ndn {
     GST_DEBUG_CATEGORY_INIT (appsrc_playbin_debug, "appsrc-playbin", 0,
         "appsrc playbin example");
 
-    /* try to open the file as an mmapped file */
     /* get some vitals, this will be used to read data from the mmapped file and
      * feed it to appsrc. */
     app->length = bufferSize;
