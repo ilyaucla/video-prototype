@@ -9,6 +9,7 @@
 #ifndef CONSUMER_CALLBACK_HPP
 #define CONSUMER_CALLBACK_HPP
 #include <ndn-cxx/contexts/consumer-context.hpp>
+#include "video-player.hpp"
 
 // Enclosing code in ndn simplifies coding (can also use `using namespace ndn`)
 namespace ndn {
@@ -37,6 +38,8 @@ namespace ndn {
     
     void
     processLeavingInterest(Interest& interest);
+    
+    VideoPlayer player;
   };
 
 } // namespace ndn

@@ -13,10 +13,13 @@
 namespace ndn {
 // Additional nested namespace could be used to prevent/limit name contentions
 
-  VideoPlayer player;
+//  int times = 0;
 
   ConsumerCallback::ConsumerCallback()
   {
+//    std::cout << "Construction" << std::endl;
+//    player.playbin_appsrc_init();
+//    std::cout << "Construction Over" << std::endl;
   }
   
   void
@@ -30,7 +33,10 @@ namespace ndn {
 		fout.write((char*)buffer, sizeof(char)*bufferSize);
     player.play_bin_uri(filename);
  */   
-    player.playbin_appsrc_init(buffer, bufferSize);
+//    if(times == 0)
+  //    player.playbin_appsrc_init(buffer, bufferSize);
+ //   else
+      player.playbin_appsrc_data(buffer, bufferSize);
   /*  
     fout.write("", 0);
 		fout.close();

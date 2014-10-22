@@ -35,6 +35,7 @@ namespace ndn {
       Name videoName(filename);
       Consumer* sequenceConsumer = new Consumer(videoName, RELIABLE, SEQUENCE);
       ConsumerCallback stubs;
+      
      // there no need for other callback now
      // sequenceConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
      //                           (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &stubs, _1));
@@ -49,6 +50,7 @@ namespace ndn {
   //	sequenceConsumer->setContextOption(RCV_BUF_SIZE, 1024*1024*4);
   		sequenceConsumer->setContextOption(CONTENT_CHUNK_SIZE, 1024*1024*10);
       sequenceConsumer->consume(Name());
+//      stubs.player.playbin_appsrc_init ();
       
       sleep(3000); // because consume() is non-blocking
       
