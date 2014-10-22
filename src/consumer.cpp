@@ -1,13 +1,11 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2013-2014 Regents of the University of California.
+ * Copyright (c) 2014 Regents of the University of California.
  *
  * @author Lijing Wang phdloli@ucla.edu
  */
 
-// correct way to include ndn-cxx headers
 #include "consumer-callback.hpp"
-//#include "contexts/consumer-context.hpp"
 
 // Enclosing code in ndn simplifies coding (can also use `using namespace ndn`)
 namespace ndn {
@@ -22,29 +20,38 @@ namespace ndn {
   			filename = argv[1];
   		else
   			filename = "/Users/Loli/Video/me.ogg";
+/*
+      Name videoConfig(filename+"/Config");
+      Consumer* configConsumer = new Consumer(videoConfig, RELIABLE, DATAGRAM );
+      configConsumer->setContextOption(MUST_BE_FRESH_S, true);
+      ConsumerCallback stubsConfig;
+      configConsumer->setContextOption(CONTENT_RETRIEVED, 
+                                (ContentCallback)bind(&ConsumerCallback::processConfig, &stubsConfig, _1, _2));
+
+      configConsumer->consume(Name());
+      sleep(3000); // because consume() is non-blocking
+*/
+
       Name videoName(filename);
-        
-      ConsumerCallback stubs;
-  
       Consumer* sequenceConsumer = new Consumer(videoName, RELIABLE, SEQUENCE);
-      
-      sequenceConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
-                                (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &stubs, _1));
+      ConsumerCallback stubs;
+     // there no need for other callback now
+     // sequenceConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
+     //                           (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &stubs, _1));
     
-      sequenceConsumer->setContextOption(DATA_ENTER_CNTX, 
-                                (DataCallback)bind(&ConsumerCallback::processData, &stubs, _1));
-    
+     //sequenceConsumer->setContextOption(DATA_ENTER_CNTX, 
+     //                           (DataCallback)bind(&ConsumerCallback::processData, &stubs, _1));
+     
       sequenceConsumer->setContextOption(CONTENT_RETRIEVED, 
                                 (ContentCallback)bind(&ConsumerCallback::processPayload, &stubs, _1, _2));
   
-  //		sequenceConsumer->setContextOption(SND_BUF_SIZE, 1024*1024*5);
-  
-  //		sequenceConsumer->setContextOption(RCV_BUF_SIZE, 1024*1024*4);
+  //	sequenceConsumer->setContextOption(SND_BUF_SIZE, 1024*1024*5);
+  //	sequenceConsumer->setContextOption(RCV_BUF_SIZE, 1024*1024*4);
   		sequenceConsumer->setContextOption(CONTENT_CHUNK_SIZE, 1024*1024*10);
-    
       sequenceConsumer->consume(Name());
       
       sleep(3000); // because consume() is non-blocking
+      
     }
     catch(std::exception& e) {
       std::cerr << "ERROR: " << e.what() << std::endl;
@@ -52,7 +59,6 @@ namespace ndn {
     }
     return 0;
   }
-
 } // namespace ndn
 
 int
