@@ -8,12 +8,13 @@
 #include "video-player.hpp"
 #include "consumer-callback.hpp"
 #include <string>
+#include <pthread.h>
 
 // Enclosing code in ndn simplifies coding (can also use `using namespace ndn`)
 namespace ndn {
 // Additional nested namespace could be used to prevent/limit name contentions
 
-//  int times = 0;
+  int times = 0;
 
   ConsumerCallback::ConsumerCallback()
   {
@@ -27,16 +28,24 @@ namespace ndn {
   {
     std::cout << "bufferSize " << bufferSize <<std::endl;
     std::cout << "@buffer " << &buffer <<std::endl;
+    std::cout << "times " << times <<std::endl;
 /*
 		std::string filename = "sequence";
 		std::ofstream fout(filename, std::ios::binary);
 		fout.write((char*)buffer, sizeof(char)*bufferSize);
     player.play_bin_uri(filename);
  */   
-//    if(times == 0)
+    std::cout << "now times " << times <<std::endl;
+    if(times == 0)
   //    player.playbin_appsrc_init(buffer, bufferSize);
- //   else
+    {
       player.playbin_appsrc_data(buffer, bufferSize);
+    }
+    else
+    {
+      player.playbin_appsrc_cpData(buffer, bufferSize);
+    }
+    times ++;
   /*  
     fout.write("", 0);
 		fout.close();
@@ -53,7 +62,6 @@ namespace ndn {
   //  std::cout << "content " << content <<std::endl;
     std::cout << "fileLength " << fileLength <<std::endl;
     //player.playbin_appsrc_init(fileLength);
-
   }
 
   void

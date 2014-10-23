@@ -6,6 +6,7 @@
  */
 
 #include "consumer-callback.hpp"
+#include <pthread.h>
 
 // Enclosing code in ndn simplifies coding (can also use `using namespace ndn`)
 namespace ndn {
@@ -48,9 +49,10 @@ namespace ndn {
   
   //	sequenceConsumer->setContextOption(SND_BUF_SIZE, 1024*1024*5);
   //	sequenceConsumer->setContextOption(RCV_BUF_SIZE, 1024*1024*4);
-  		sequenceConsumer->setContextOption(CONTENT_CHUNK_SIZE, 1024*1024*10);
+  		sequenceConsumer->setContextOption(CONTENT_CHUNK_SIZE, 1024*256);
       sequenceConsumer->consume(Name());
-//      stubs.player.playbin_appsrc_init ();
+//      std::cout << "appsrc_init" <<std::endl;
+      //stubs.player.playbin_appsrc_init ();
       
       sleep(3000); // because consume() is non-blocking
       

@@ -25,6 +25,8 @@ def configure(conf):
     conf.check_cfg(package='gstreamer-1.0', args=['--cflags', '--libs'], 
          uselib_store='GSTREAMER', mandatory=True) 
 
+    conf.env.LIB_PTHREAD = 'pthread'
+
     if conf.options.with_tests:
         conf.env['WITH_TESTS'] = True
 
@@ -65,7 +67,13 @@ def build(bld):
     bld(target="consumer",
         features=["cxx", "cxxprogram"],
         source= "src/consumer.cpp src/video-player.cpp src/consumer-callback.cpp",
-        use='NDN_CXX BOOST GSTREAMER',
+        use='NDN_CXX BOOST GSTREAMER PTHREAD',
+        )
+
+    bld(target="test",
+        features=["cxx", "cxxprogram"],
+        source= "src/test.cpp",
+        args = ['-pthread'],
         )
 
     # Tests

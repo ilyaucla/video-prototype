@@ -7,27 +7,26 @@
 
 #include "video-player.hpp"
 
+
 namespace ndn {
 
   VideoPlayer::VideoPlayer()
   {
   }
+  
+  size_t bufferSizeTmp;
 
-  GST_DEBUG_CATEGORY (appsrc_playbin_debug);
-  #define GST_CAT_DEFAULT appsrc_playbin_debug
   void
-  VideoPlayer::playbin_appsrc_data (const uint8_t* buffer, size_t bufferSize)
+  VideoPlayer::playbin_appsrc_init ()
   {
     App *app = &s_app;
     GstBus *bus;
 
     gst_init (NULL, NULL);
-    GST_DEBUG_CATEGORY_INIT (appsrc_playbin_debug, "appsrc-playbin", 0,
-        "appsrc playbin example");
     /* get some vitals, this will be used to read data from the mmapped file and
      * feed it to appsrc. */
-    app->length = bufferSize;
-    app->data = (guint8 *) buffer;
+    app->length = 0;
+    app->data = NULL;
     app->offset = 0;
     /* create a mainloop to get messages */
     app->loop = g_main_loop_new (NULL, TRUE);
@@ -44,14 +43,70 @@ namespace ndn {
     g_signal_connect (app->playbin, "deep-notify::source",
         (GCallback) found_source, app);
     /* go to playing and wait in a mainloop. */
+    std::cout << "in appsr_init before PLAYING" <<std::endl;
     gst_element_set_state (app->playbin, GST_STATE_PLAYING);
     /* this mainloop is stopped when we receive an error or EOS */
     g_main_loop_run (app->loop);
-    GST_DEBUG ("stopping!");
     gst_element_set_state (app->playbin, GST_STATE_NULL);
     /* free the file */
     gst_object_unref (bus);
     g_main_loop_unref (app->loop);
+  }
+
+  void
+  VideoPlayer::playbin_appsrc_cpData(const uint8_t* buffer, size_t bufferSize )
+  {
+    App *app = &s_app;
+    std::cout << "I'm in second+ cpData!" <<std::endl;
+    uint8_t* bufferTmp = new uint8_t[bufferSize];
+    memcpy (bufferTmp, buffer, bufferSize);
+
+    while(app->dataEmpty == 0)
+    {
+      pthread_cond_wait(&(app->_cond_empty), &(app->_mutex_empty));
+    }
+
+    app->length = bufferSize;
+    app->data = (guint8 *) bufferTmp;
+    app->offset = 0;
+    app->dataEmpty = 0;
+
+    pthread_mutex_lock(&(app->_mutex_ready));
+    app->dataReady = 1;
+    pthread_cond_signal(&(app->_cond_ready));
+    pthread_mutex_unlock(&(app->_mutex_ready));
+
+   // pthread_mutex_lock(&(app->_mutex_empty));
+    //pthread_mutex_unlock(&(app->_mutex_empty));
+  }
+
+  void
+  VideoPlayer::playbin_appsrc_data(const uint8_t* buffer, size_t bufferSize )
+  {
+    App *app = &s_app;
+
+    /* get some vitals, this will be used to read data from the mmapped file and
+     * feed it to appsrc. */
+    uint8_t* bufferTmp = new uint8_t[bufferSize];
+    memcpy (bufferTmp, buffer, bufferSize);
+
+    app->length = bufferSize;
+    app->data = (guint8 *) bufferTmp;
+    app->offset = 0;
+    app->dataEmpty = 0;
+    app->dataReady = 1;
+    pthread_mutex_init(&(app->_mutex_ready), NULL);
+    pthread_mutex_init(&(app->_mutex_empty), NULL);
+    pthread_cond_init(&(app->_cond_ready), NULL);
+    pthread_cond_init(&(app->_cond_empty), NULL);
+
+    pthread_t thread; 
+    int rc;
+    rc = pthread_create(&thread, NULL, playbin_appsrc_thread , (void *)app);
+
+   // pthread_mutex_lock(&(app->_mutex_empty));
+    //pthread_mutex_unlock(&(app->_mutex_empty));
+    std::cout << "Jump OUT!! due to dataEmpty = 1 " << bufferSize <<std::endl;
   }
 
 /*
