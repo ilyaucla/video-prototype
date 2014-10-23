@@ -49,7 +49,7 @@ namespace ndn {
   
   //	sequenceConsumer->setContextOption(SND_BUF_SIZE, 1024*1024*5);
   //	sequenceConsumer->setContextOption(RCV_BUF_SIZE, 1024*1024*4);
-  		sequenceConsumer->setContextOption(CONTENT_CHUNK_SIZE, 1024*256);
+  		sequenceConsumer->setContextOption(CONTENT_CHUNK_SIZE, 1024*1024);
       sequenceConsumer->consume(Name());
 //      std::cout << "appsrc_init" <<std::endl;
       //stubs.player.playbin_appsrc_init ();

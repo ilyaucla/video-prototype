@@ -13,45 +13,6 @@ namespace ndn {
   VideoPlayer::VideoPlayer()
   {
   }
-  
-  size_t bufferSizeTmp;
-
-  void
-  VideoPlayer::playbin_appsrc_init ()
-  {
-    App *app = &s_app;
-    GstBus *bus;
-
-    gst_init (NULL, NULL);
-    /* get some vitals, this will be used to read data from the mmapped file and
-     * feed it to appsrc. */
-    app->length = 0;
-    app->data = NULL;
-    app->offset = 0;
-    /* create a mainloop to get messages */
-    app->loop = g_main_loop_new (NULL, TRUE);
-    app->playbin = gst_element_factory_make ("playbin", NULL);
-    g_assert (app->playbin);
-    bus = gst_pipeline_get_bus (GST_PIPELINE (app->playbin));
-    /* add watch for messages */
-   // gst_bus_add_watch (bus, (GstBusFunc) bus_message, app);
-    gst_bus_add_watch (bus, bus_call, app->loop);
-    /* set to read from appsrc */
-    g_object_set (app->playbin, "uri", "appsrc://", NULL);
-    /* get notification when the source is created so that we get a handle to it
-     * and can configure it */
-    g_signal_connect (app->playbin, "deep-notify::source",
-        (GCallback) found_source, app);
-    /* go to playing and wait in a mainloop. */
-    std::cout << "in appsr_init before PLAYING" <<std::endl;
-    gst_element_set_state (app->playbin, GST_STATE_PLAYING);
-    /* this mainloop is stopped when we receive an error or EOS */
-    g_main_loop_run (app->loop);
-    gst_element_set_state (app->playbin, GST_STATE_NULL);
-    /* free the file */
-    gst_object_unref (bus);
-    g_main_loop_unref (app->loop);
-  }
 
   void
   VideoPlayer::playbin_appsrc_cpData(const uint8_t* buffer, size_t bufferSize )
@@ -70,14 +31,6 @@ namespace ndn {
     app->data = (guint8 *) bufferTmp;
     app->offset = 0;
     app->dataEmpty = 0;
-
-    pthread_mutex_lock(&(app->_mutex_ready));
-    app->dataReady = 1;
-    pthread_cond_signal(&(app->_cond_ready));
-    pthread_mutex_unlock(&(app->_mutex_ready));
-
-   // pthread_mutex_lock(&(app->_mutex_empty));
-    //pthread_mutex_unlock(&(app->_mutex_empty));
   }
 
   void
@@ -94,10 +47,7 @@ namespace ndn {
     app->data = (guint8 *) bufferTmp;
     app->offset = 0;
     app->dataEmpty = 0;
-    app->dataReady = 1;
-    pthread_mutex_init(&(app->_mutex_ready), NULL);
     pthread_mutex_init(&(app->_mutex_empty), NULL);
-    pthread_cond_init(&(app->_cond_ready), NULL);
     pthread_cond_init(&(app->_cond_empty), NULL);
 
     pthread_t thread; 
@@ -147,5 +97,42 @@ namespace ndn {
     g_object_unref (playbin);
     g_source_remove (bus_watch_id);
     g_main_loop_unref (loop);
+  }
+
+  void
+  VideoPlayer::playbin_appsrc_init ()
+  {
+    App *app = &s_app;
+    GstBus *bus;
+
+    gst_init (NULL, NULL);
+    /* get some vitals, this will be used to read data from the mmapped file and
+     * feed it to appsrc. */
+    app->length = 0;
+    app->data = NULL;
+    app->offset = 0;
+    /* create a mainloop to get messages */
+    app->loop = g_main_loop_new (NULL, TRUE);
+    app->playbin = gst_element_factory_make ("playbin", NULL);
+    g_assert (app->playbin);
+    bus = gst_pipeline_get_bus (GST_PIPELINE (app->playbin));
+    /* add watch for messages */
+   // gst_bus_add_watch (bus, (GstBusFunc) bus_message, app);
+    gst_bus_add_watch (bus, bus_call, app->loop);
+    /* set to read from appsrc */
+    g_object_set (app->playbin, "uri", "appsrc://", NULL);
+    /* get notification when the source is created so that we get a handle to it
+     * and can configure it */
+    g_signal_connect (app->playbin, "deep-notify::source",
+        (GCallback) found_source, app);
+    /* go to playing and wait in a mainloop. */
+    std::cout << "in appsr_init before PLAYING" <<std::endl;
+    gst_element_set_state (app->playbin, GST_STATE_PLAYING);
+    /* this mainloop is stopped when we receive an error or EOS */
+    g_main_loop_run (app->loop);
+    gst_element_set_state (app->playbin, GST_STATE_NULL);
+    /* free the file */
+    gst_object_unref (bus);
+    g_main_loop_unref (app->loop);
   }
 } // namespace ndn

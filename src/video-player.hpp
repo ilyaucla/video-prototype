@@ -29,7 +29,6 @@ namespace ndn {
       void
       playbin_appsrc_cpData (const uint8_t *buffer, size_t bufferSize);
 
-
       static gboolean
       bus_call (GstBus * bus, GstMessage *msg, gpointer data)
       {
@@ -58,11 +57,6 @@ namespace ndn {
       return TRUE;
       }
 
-      struct threadData {
-        const uint8_t* buffer;
-        size_t bufferSize;
-      };
-
     private:
       struct _App
       {
@@ -78,50 +72,14 @@ namespace ndn {
         
         guint8 *nextData;
         gsize nextLength;
-        pthread_cond_t _cond_ready;
         pthread_cond_t _cond_empty;
-        pthread_mutex_t _mutex_ready;
         pthread_mutex_t _mutex_empty;
         int dataEmpty;
-        int dataReady;
       };
       
       typedef struct _App App;
       App s_app;
-      #define CHUNK_SIZE  4096
-      
-      static void
-      *playbin_appsrc_thread (void * threadData)
-      {
-        App *app;
-        app = (App *) threadData;
-
-        GstBus *bus;
-        gst_init (NULL, NULL);
-        /* create a mainloop to get messages */
-        app->loop = g_main_loop_new (NULL, TRUE);
-        app->playbin = gst_element_factory_make ("playbin", NULL);
-        g_assert (app->playbin);
-        bus = gst_pipeline_get_bus (GST_PIPELINE (app->playbin));
-        /* add watch for messages */
-        gst_bus_add_watch (bus, bus_call, app->loop);
-        /* set to read from appsrc */
-        g_object_set (app->playbin, "uri", "appsrc://", NULL);
-        /* get notification when the source is created so that we get a handle to it
-         * and can configure it */
-        g_signal_connect (app->playbin, "deep-notify::source",
-        (GCallback) found_source, app);
-        /* go to playing and wait in a mainloop. */
-        gst_element_set_state (app->playbin, GST_STATE_PLAYING);
-        /* this mainloop is stopped when we receive an error or EOS */
-        g_main_loop_run (app->loop);
-        gst_element_set_state (app->playbin, GST_STATE_NULL);
-        /* free the file */
-        gst_object_unref (bus);
-        g_main_loop_unref (app->loop);
-
-        pthread_exit(NULL);
-      }
+      #define CHUNK_SIZE  1024*1024
 
       static gboolean
       read_data (App * app)
@@ -129,24 +87,11 @@ namespace ndn {
         GstBuffer *buffer;
         guint len;
         GstFlowReturn ret;
-      
-     //   if (app->dataReady == 0) 
-     //   {
-     //     std::cout << "I'm waiting" <<std::endl;
-     //     return TRUE;
-     //   } 
-     
-        //pthread_mutex_lock(&(app->_mutex_ready));
-   //     while(app->dataReady == 0)
-   //     {
-   //       pthread_cond_wait(&(app->_cond_ready), &(app->_mutex_ready));
-   //     }
-        if(app->dataReady == 0)
+        
+        if(app->data == NULL)
         {
           return TRUE; 
         }
-       // pthread_mutex_unlock(&(app->_mutex_ready));
-        
         std::cout << "Read Data Offset" << app->offset <<std::endl;
         buffer = gst_buffer_new ();
 
@@ -156,10 +101,10 @@ namespace ndn {
           pthread_mutex_lock(&(app->_mutex_empty));
           std::cout << "Meet the end inside" <<std::endl;
           app->dataEmpty = 1;
+          app->data = NULL;
           pthread_cond_signal(&(app->_cond_empty));
           pthread_mutex_unlock(&(app->_mutex_empty));
 
-          app->dataReady = 0;
           std::cout << "Meet the end" <<std::endl;
           //g_signal_emit_by_name (app->appsrc, "end-of-stream", &ret);
           return TRUE;
@@ -222,6 +167,39 @@ namespace ndn {
          * mainloop. */
         g_signal_connect (app->appsrc, "need-data", G_CALLBACK (start_feed), app);
         g_signal_connect (app->appsrc, "enough-data", G_CALLBACK (stop_feed), app);
+      }
+
+      static void
+      *playbin_appsrc_thread (void * threadData)
+      {
+        App *app;
+        app = (App *) threadData;
+
+        GstBus *bus;
+        gst_init (NULL, NULL);
+        /* create a mainloop to get messages */
+        app->loop = g_main_loop_new (NULL, TRUE);
+        app->playbin = gst_element_factory_make ("playbin", NULL);
+        g_assert (app->playbin);
+        bus = gst_pipeline_get_bus (GST_PIPELINE (app->playbin));
+        /* add watch for messages */
+        gst_bus_add_watch (bus, bus_call, app->loop);
+        /* set to read from appsrc */
+        g_object_set (app->playbin, "uri", "appsrc://", NULL);
+        /* get notification when the source is created so that we get a handle to it
+         * and can configure it */
+        g_signal_connect (app->playbin, "deep-notify::source",
+        (GCallback) found_source, app);
+        /* go to playing and wait in a mainloop. */
+        gst_element_set_state (app->playbin, GST_STATE_PLAYING);
+        /* this mainloop is stopped when we receive an error or EOS */
+        g_main_loop_run (app->loop);
+        gst_element_set_state (app->playbin, GST_STATE_NULL);
+        /* free the file */
+        gst_object_unref (bus);
+        g_main_loop_unref (app->loop);
+
+        pthread_exit(NULL);
       }
   };
 } // namespace ndn
