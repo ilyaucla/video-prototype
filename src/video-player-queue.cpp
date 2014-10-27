@@ -7,7 +7,6 @@
 
 #include "video-player.hpp"
 
-
 namespace ndn {
 
   VideoPlayer::VideoPlayer()
@@ -44,11 +43,14 @@ namespace ndn {
     /* get some vitals, this will be used to read data from the mmapped file and
      * feed it to appsrc. */
 
+    app->length = 0;
+    app->data = NULL;
+    app->offset = 0;
+
     pthread_t thread; 
     int rc;
     rc = pthread_create(&thread, NULL, playbin_appsrc_thread , (void *)app);
 
     std::cout << "playbin_appsrc_init OK! " << std::endl;
   }
-
 } // namespace ndn

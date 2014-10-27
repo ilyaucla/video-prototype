@@ -43,6 +43,10 @@ namespace ndn {
       
         GMainLoop *loop;
         guint sourceid;
+      
+        guint8 *data;
+        gsize length;
+        guint64 offset;
 
         std::deque<DataNode> dataQue;
         
@@ -56,6 +60,7 @@ namespace ndn {
       read_data (App * app)
       {
         GstBuffer *buffer;
+        guint len;
         GstFlowReturn ret;
         
         if((app -> dataQue).size() == 0)
@@ -63,18 +68,38 @@ namespace ndn {
           return TRUE; 
         }
         
-        DataNode tmpNode = (app -> dataQue).front();
-
-        std::cout << "Read Data Chunk" << tmpNode.length <<std::endl;
+        if(app -> data == NULL)
+        {
+          DataNode tmpNode = (app -> dataQue).front();
+          app -> data = tmpNode.data;
+          app -> length = tmpNode.length;
+          app -> offset = 0;
+        }
+        std::cout << "Read Data Offset" << app->offset <<std::endl;
         buffer = gst_buffer_new ();
-        buffer = gst_buffer_new_wrapped (tmpNode.data , tmpNode.length);
+
+        //std::cout << "I'm reading" <<std::endl;
+        if (app->offset >= app->length) {
+          /* we are EOS, send end-of-stream and remove the source */
+          app -> data = NULL;
+          (app -> dataQue).pop_front();
+          std::cout << "Meet the end" <<std::endl;
+          //g_signal_emit_by_name (app->appsrc, "end-of-stream", &ret);
+          return TRUE;
+        }
+      
+        /* read the next chunk */
+        len = CHUNK_SIZE;
+        if (app->offset + len > app->length)
+          len = app->length - app->offset;
+        buffer = gst_buffer_new_wrapped (app->data + app->offset, len);
         g_signal_emit_by_name (app->appsrc, "push-buffer", buffer, &ret);
       //  gst_buffer_unref (buffer);
         if (ret != GST_FLOW_OK) {
           /* some error, stop sending data */
           return FALSE;
         }
-        (app -> dataQue).pop_front();
+        app->offset += len;
         return TRUE;
       }
       
@@ -109,6 +134,9 @@ namespace ndn {
         /* get a handle to the appsrc */
         g_object_get (orig, pspec->name, &app->appsrc, NULL);
       
+        /* we can set the length in appsrc. This allows some elements to estimate the
+         * total duration of the stream. It's a good idea to set the property when you
+         * can but it's not required. */
 //        g_object_set (app->appsrc, "size", (gint64) app->length, NULL);
       
         /* configure the appsrc, we will push data into the appsrc from the
@@ -126,13 +154,12 @@ namespace ndn {
         GstBus *bus;
         gst_init (NULL, NULL);
         /* create a mainloop to get messages */
-        app->loop = g_main_loop_new (NULL, FALSE);
+        app->loop = g_main_loop_new (NULL, TRUE);
         app->playbin = gst_element_factory_make ("playbin", NULL);
         g_assert (app->playbin);
         bus = gst_pipeline_get_bus (GST_PIPELINE (app->playbin));
         /* add watch for messages */
         gst_bus_add_watch (bus, (GstBusFunc)bus_call, app);
-        g_signal_connect (bus, "message", G_CALLBACK (bus_call), app);
         /* set to read from appsrc */
         g_object_set (app->playbin, "uri", "appsrc://", NULL);
         /* get notification when the source is created so that we get a handle to it
@@ -154,6 +181,7 @@ namespace ndn {
       static gboolean
       bus_call (GstBus * bus, GstMessage *msg, App *app)
       {
+    
         switch (GST_MESSAGE_TYPE (msg)) {
           case GST_MESSAGE_BUFFERING: {
             gint percent = 0;
@@ -180,12 +208,6 @@ namespace ndn {
             g_print ("Error: %s\n", err->message);
             g_error_free (err);
             g_main_loop_quit (app->loop);
-            break;
-          }
-          case GST_MESSAGE_CLOCK_LOST:{
-          /* Get a new clock */
-            gst_element_set_state (app->playbin, GST_STATE_PAUSED);
-            gst_element_set_state (app->playbin, GST_STATE_PLAYING);
             break;
           }
           default:

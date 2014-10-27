@@ -16,14 +16,14 @@ namespace ndn {
   {
     try {
   
-  		std::string filename;
+  		std::string filename = "/Users/Loli/video/";
       char *buffer;
       long size = 0;
 
   		if (argc >= 2)
-  			filename = argv[1];
+  			filename += argv[1];
   		else
-  			filename = "/Users/Loli/Video/me.ogg";
+  			filename += "me.ogg";
 /*  
       Name videoConfig(filename + "/Config");
       Producer* configProducer = new Producer(videoConfig);

@@ -29,27 +29,10 @@ namespace ndn {
     std::cout << "bufferSize " << bufferSize <<std::endl;
     std::cout << "@buffer " << &buffer <<std::endl;
     std::cout << "times " << times <<std::endl;
-/*
-		std::string filename = "sequence";
-		std::ofstream fout(filename, std::ios::binary);
-		fout.write((char*)buffer, sizeof(char)*bufferSize);
-    player.play_bin_uri(filename);
- */   
-    std::cout << "now times " << times <<std::endl;
-    if(times == 0)
-  //    player.playbin_appsrc_init(buffer, bufferSize);
-    {
-      player.playbin_appsrc_data(buffer, bufferSize);
-    }
-    else
-    {
-      player.playbin_appsrc_cpData(buffer, bufferSize);
-    }
+
+    player.playbin_appsrc_data(buffer, bufferSize);
+
     times ++;
-  /*  
-    fout.write("", 0);
-		fout.close();
-    */
   }
   
   void

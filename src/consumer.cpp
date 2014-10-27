@@ -16,11 +16,12 @@ namespace ndn {
   {
     try {
   
-  		std::string filename;
+  		std::string filename = "/Users/Loli/video/";
   		if(argc >=2 )
-  			filename = argv[1];
+  			filename += argv[1];
   		else
-  			filename = "/Users/Loli/Video/me.ogg";
+  			filename += "me.ogg";
+      std::cout<<filename<<std::endl;
 /*
       Name videoConfig(filename+"/Config");
       Consumer* configConsumer = new Consumer(videoConfig, RELIABLE, DATAGRAM );
@@ -37,7 +38,7 @@ namespace ndn {
       Consumer* sequenceConsumer = new Consumer(videoName, RELIABLE, SEQUENCE);
       ConsumerCallback stubs;
       
-     // there no need for other callback now
+     // there is no need for other callback now
      // sequenceConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
      //                           (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &stubs, _1));
     
@@ -49,11 +50,10 @@ namespace ndn {
   
   //	sequenceConsumer->setContextOption(SND_BUF_SIZE, 1024*1024*5);
   //	sequenceConsumer->setContextOption(RCV_BUF_SIZE, 1024*1024*4);
-  		sequenceConsumer->setContextOption(CONTENT_CHUNK_SIZE, 1024*1024);
+  		sequenceConsumer->setContextOption(CONTENT_CHUNK_SIZE, 1024*1024*10);
       sequenceConsumer->consume(Name());
 //      std::cout << "appsrc_init" <<std::endl;
       //stubs.player.playbin_appsrc_init ();
-      
       sleep(3000); // because consume() is non-blocking
       
     }
