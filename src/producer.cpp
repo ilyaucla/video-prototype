@@ -24,6 +24,7 @@ namespace ndn {
   			filename += argv[1];
   		else
   			filename += "me.ogg";
+
 /*  
       Name videoConfig(filename + "/Config");
       Producer* configProducer = new Producer(videoConfig);
@@ -58,6 +59,7 @@ namespace ndn {
       sequenceProducer->setup();
       
       VideoGenerator generator;
+      generator.playbin_file_info(filename);
       buffer = generator.generateVideoOnce(filename, size);
 
       Name emptySuffix;

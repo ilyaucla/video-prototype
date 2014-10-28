@@ -37,4 +37,44 @@ namespace ndn {
   	filestr.close();
     return buffer;
   }
+  /*
+   * Videogenrator will call this function to setup the stream/file info
+   */
+  void
+  VideoGenerator::playbin_file_info (std::string filename)
+  {
+    GstElement *playbin;
+   // GstElement *fakevideosink, *fakeaudiosink;
+    gchar *uri;
+    GstState state = GST_STATE_NULL;
+    GstPad *pad;
+    GstCaps *caps;
+
+    gst_init (NULL, NULL);
+
+    playbin = gst_element_factory_make ("playbin", NULL);
+
+    /* take the commandline argument and ensure that it is a uri */
+    uri = gst_filename_to_uri (filename.c_str(), NULL);
+
+//    fakevideosink = gst_element_factory_make ("fakesink", NULL);
+//    fakeaudiosink = gst_element_factory_make ("fakesink", NULL);
+//    g_object_set (playbin, "video-sink", fakevideosink, NULL);
+//    g_object_set (playbin, "audio-sink", fakeaudiosink, NULL);
+
+    g_object_set (playbin, "uri", uri, NULL);
+    g_free (uri);
+
+    gst_element_set_state (playbin, GST_STATE_PAUSED);
+    gst_element_get_state (playbin, &state, NULL, GST_SECOND * 1);
+    g_signal_emit_by_name (playbin, "get-video-pad", 0, &pad, NULL);
+
+    caps =  gst_pad_get_current_caps (pad);
+    read_video_props(caps);
+
+    /* cleanup */
+    gst_element_set_state (playbin, GST_STATE_NULL);
+    g_object_unref (playbin);
+    return; 
+  }
 } // namespace ndn
