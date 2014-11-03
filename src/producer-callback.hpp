@@ -24,6 +24,11 @@ namespace ndn {
     processInterest(const Interest& interest);
     
     void
+    processOutgoingData(const Data& data)
+    {
+      std::cout << data.getName() << std::endl;
+    }
+    void
     processIncomingInterest(const Interest& interest);
     
     bool

@@ -22,11 +22,11 @@ namespace ndn {
 
       VideoPlayer();
       void
-      playbin_uri (std::string filename);
-      void
       playbin_appsrc_init ();
       void
       playbin_appsrc_data (const uint8_t *buffer, size_t bufferSize);
+      void 
+      get_streaminfo(std::string streaminfo);
 
     private:
       struct _DataNode
@@ -45,7 +45,7 @@ namespace ndn {
         guint sourceid;
 
         std::deque<DataNode> dataQue;
-        
+        std::string capstr;
       };
       typedef struct _App App;
       App s_app;
@@ -137,8 +137,7 @@ namespace ndn {
         g_object_set (app->playbin, "uri", "appsrc://", NULL);
         /* get notification when the source is created so that we get a handle to it
          * and can configure it */
-        g_signal_connect (app->playbin, "deep-notify::source",
-        (GCallback) found_source, app);
+        g_signal_connect (app->playbin, "deep-notify::source", (GCallback) found_source, app);
         /* go to playing and wait in a mainloop. */
         gst_element_set_state (app->playbin, GST_STATE_PLAYING);
         /* this mainloop is stopped when we receive an error or EOS */

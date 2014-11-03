@@ -20,40 +20,56 @@ namespace ndn {
   		if(argc >=2 )
   			filename += argv[1];
   		else
-  			filename += "me.ogg";
+  			filename += "duoyan.mp4";
       std::cout<<filename<<std::endl;
-/*
-      Name videoConfig(filename+"/Config");
-      Consumer* configConsumer = new Consumer(videoConfig, RELIABLE, DATAGRAM );
-      configConsumer->setContextOption(MUST_BE_FRESH_S, true);
-      ConsumerCallback stubsConfig;
-      configConsumer->setContextOption(CONTENT_RETRIEVED, 
-                                (ContentCallback)bind(&ConsumerCallback::processConfig, &stubsConfig, _1, _2));
 
-      configConsumer->consume(Name());
-      sleep(3000); // because consume() is non-blocking
-*/
-
+//      ConsumerCallback cb_consumer;
       Name videoName(filename);
-      Consumer* sequenceConsumer = new Consumer(videoName, RELIABLE, SEQUENCE);
-      ConsumerCallback stubs;
+      ConsumerCallback cb_consumer;
+
+      Consumer* streaminfoConsumer = new Consumer(videoName, RELIABLE, DATAGRAM );
+      streaminfoConsumer->setContextOption(MUST_BE_FRESH_S, true);
+      streaminfoConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
+        (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
+      streaminfoConsumer->setContextOption(CONTENT_RETRIEVED, 
+        (ContentCallback)bind(&ConsumerCallback::processStreaminfo, &cb_consumer, _1, _2));
+
+      streaminfoConsumer->consume(Name("streaminfo"));
+
+
+//      streaminfoConsumer->stop();
+      sleep(10); // because consume() is non-blocking
+      std::cout << "consume whole start!" <<std::endl;
       
+      Name videoName2(filename+"whole");
+
+      Consumer* frameConsumer = new Consumer(videoName2, RELIABLE, SEQUENCE);
+      frameConsumer->setContextOption(MUST_BE_FRESH_S, true);
+/*
+      Name videoName(filename);
+      Consumer* frameConsumer = new Consumer(videoName, RELIABLE, SEQUENCE);
+      ConsumerCallback cb_consumer;
+ */     
      // there is no need for other callback now
-     // sequenceConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
-     //                           (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &stubs, _1));
+      frameConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
+                                (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
     
-     //sequenceConsumer->setContextOption(DATA_ENTER_CNTX, 
-     //                           (DataCallback)bind(&ConsumerCallback::processData, &stubs, _1));
-     
-      sequenceConsumer->setContextOption(CONTENT_RETRIEVED, 
-                                (ContentCallback)bind(&ConsumerCallback::processPayload, &stubs, _1, _2));
-  
-  //	sequenceConsumer->setContextOption(SND_BUF_SIZE, 1024*1024*5);
-  //	sequenceConsumer->setContextOption(RCV_BUF_SIZE, 1024*1024*4);
-  		sequenceConsumer->setContextOption(CONTENT_CHUNK_SIZE, 1024*1024*10);
-      sequenceConsumer->consume(Name());
+     frameConsumer->setContextOption(DATA_ENTER_CNTX, 
+                                (DataCallback)bind(&ConsumerCallback::processData, &cb_consumer, _1));
+   
+      frameConsumer->setContextOption(CONTENT_RETRIEVED, 
+                                (ContentCallback)bind(&ConsumerCallback::processPayload, &cb_consumer, _1, _2));
+ 
+  //	frameConsumer->setContextOption(SND_BUF_SIZE, 1024*1024*5);
+  //	frameConsumer->setContextOption(RCV_BUF_SIZE, 1024*1024*4);
+
+//  		frameConsumer->setContextOption(CONTENT_CHUNK_SIZE, 1024*1024*10);
+  		frameConsumer->setContextOption(CONTENT_RETRIEVAL_SIZE, 1024*1024*10);
+      frameConsumer->consume(Name());
+//      frameConsumer->consume(Name());
+
 //      std::cout << "appsrc_init" <<std::endl;
-      //stubs.player.playbin_appsrc_init ();
+      //cb_consumer.player.playbin_appsrc_init ();
       sleep(3000); // because consume() is non-blocking
       
     }

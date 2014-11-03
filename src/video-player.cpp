@@ -12,6 +12,13 @@ namespace ndn {
 
   VideoPlayer::VideoPlayer()
   {
+  }
+
+  void
+  VideoPlayer::get_streaminfo(std::string streaminfo)
+  {
+    App *app = &s_app;
+    app->capstr = streaminfo; 
     playbin_appsrc_init();
   }
 
@@ -30,6 +37,7 @@ namespace ndn {
     (app->dataQue).push_back(dataNode);
 
     std::cout << "CP Data Done! " << bufferSize <<std::endl;
+//    std::cout << app->capstr << std::endl;
   }
 
 /*
@@ -37,7 +45,7 @@ namespace ndn {
  * waiting in a loop
  */
   void
-  VideoPlayer::playbin_appsrc_init ()
+  VideoPlayer::playbin_appsrc_init()
   {
     App *app = &s_app;
 
@@ -50,5 +58,4 @@ namespace ndn {
 
     std::cout << "playbin_appsrc_init OK! " << std::endl;
   }
-
 } // namespace ndn

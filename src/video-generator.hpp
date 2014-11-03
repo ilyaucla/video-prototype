@@ -11,6 +11,7 @@
 
 #include <string>
 #include <gst/gst.h>
+#include <ndn-cxx/contexts/producer-context.hpp>
 
 namespace ndn {
 // Additional nested namespace could be used to prevent/limit name contentions
@@ -22,8 +23,10 @@ namespace ndn {
       VideoGenerator();
       char * 
       generateVideoOnce(std::string filename, long &size);
-      void
+      char *
       playbin_file_info (std::string filename);
+      void
+      playbin_generate_frames (std::string filename, Producer * producer);
 
     private:
 
@@ -46,8 +49,8 @@ namespace ndn {
           g_print ("No width/height available\n");
           return;
          }
-        g_print ("The video size of this set of capabilities is %d x %d and the frame rate is %d/%d\nformat:%s type:%s\n",width, height,num,denom,format,type);
-        g_print("caps: %s\n", gst_caps_to_string(caps));
+        g_print ("Capabilities:\n the size is %d x %d\n the framerate is %d/%d\n the format is %s\n the type is %s\n", width, height,num,denom,format,type);
+      //  g_print("caps: %s\n", gst_caps_to_string(caps));
       }
   };
 } // namespace ndn

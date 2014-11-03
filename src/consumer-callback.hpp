@@ -25,7 +25,7 @@ namespace ndn {
     processPayload(const uint8_t* buffer, size_t bufferSize);
     
     void
-    processConfig(const uint8_t* buffer, size_t bufferSize);
+    processStreaminfo(const uint8_t* buffer, size_t bufferSize);
     
     void
     processData(Data& data);

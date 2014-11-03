@@ -36,15 +36,15 @@ namespace ndn {
   }
   
   void
-  ConsumerCallback::processConfig(const uint8_t* buffer, size_t bufferSize)
+  ConsumerCallback::processStreaminfo(const uint8_t* buffer, size_t bufferSize)
   {
-    std::string content((char*) buffer);
-    long fileLength = std::stol(content);
+    std::string streaminfo((char*) buffer);
+  //  long fileLength = std::stol(content);
   //  std::cout << "bufferSize " << bufferSize <<std::endl;
   //  std::cout << "buffer " << buffer <<std::endl;
-  //  std::cout << "content " << content <<std::endl;
-    std::cout << "fileLength " << fileLength <<std::endl;
-    //player.playbin_appsrc_init(fileLength);
+ //   std::cout << "streaminfo " << streaminfo <<std::endl;
+  //  std::cout << "fileLength " << fileLength <<std::endl;
+    player.get_streaminfo(streaminfo);
   }
 
   void

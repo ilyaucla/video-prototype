@@ -17,53 +17,61 @@ namespace ndn {
     try {
   
   		std::string filename = "/Users/Loli/video/";
+      std::string streaminfo;
       char *buffer;
       long size = 0;
+      VideoGenerator generator;
 
   		if (argc >= 2)
   			filename += argv[1];
   		else
-  			filename += "me.ogg";
+  			filename += "duoyan.mp4";
 
-/*  
-      Name videoConfig(filename + "/Config");
-      Producer* configProducer = new Producer(videoConfig);
-      configProducer->setup();
-      
-      VideoGenerator generator;
-      buffer = generator.generateVideoOnce(filename, size);
-
-      Name emptySuffix;
-      std::string sizeStr = std::to_string(size);
-      configProducer->produce(emptySuffix, (uint8_t *)sizeStr.c_str(), sizeof(long));
-
-      std::cout << "Config OK!" << std::endl;
-      sleep(300); // because setup() is non-blocking
-*/
+/* get the video file info first, width, height, format etc. Just get the whole caps info
+ */
+      streaminfo = generator.playbin_file_info(filename);
+      std::cout << "Streaminfo(Producer Part):  Size=" << streaminfo.size()<< std::endl;
+      std::cout << streaminfo << std::endl;
+  
       Name videoName(filename);
+
+      Producer* producer = new Producer(videoName);
+      producer->setup();
+      Name streaminfoSuffix("streaminfo");
+      producer->produce(streaminfoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size());
+
+      std::cout << "Streaminfo OK!" << std::endl;
+      sleep(10); // because setup() is non-blocking
       
-      Producer* sequenceProducer = new Producer(videoName);
+      std::cout << "Now produce frames" << std::endl;
+      Name videoName2(filename + "whole");
+      Producer* producerFrame = new Producer(videoName2);
+      ProducerCallback cb_producer;
+      cb_producer.setProducer(producerFrame); // needed for some callback functionality
+
+      producerFrame->setContextOption(DATA_LEAVE_CNTX,
+          (ConstDataCallback)bind(&ProducerCallback::processOutgoingData, &cb_producer, _1));
+
+      producerFrame->setup();
+//      generator.playbin_generate_frames(filename, producerFrame);
 //      There is no need for callback now 
-//      ProducerCallback stubs;
+//      ProducerCallback cb_producer;
 //
-//      stubs.setProducer(sequenceProducer); // needed for some callback functionality
 //      
 //      //setting callbacks
-//      sequenceProducer->setContextOption(INTEREST_ENTER_CNTX,
-//                        (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &stubs, _1));
+//      producerFrame->setContextOption(INTEREST_ENTER_CNTX,
+//                        (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &cb_producer, _1));
 //                        
-//      sequenceProducer->setContextOption(INTEREST_TO_PROCESS,
-//                        (ConstInterestCallback)bind(&ProducerCallback::processInterest, &stubs, _1));
+//      producerFrame->setContextOption(INTEREST_TO_PROCESS,
+//                        (ConstInterestCallback)bind(&ProducerCallback::processInterest, &cb_producer, _1));
   
       //listening
-      sequenceProducer->setup();
-      
-      VideoGenerator generator;
-      generator.playbin_file_info(filename);
+//      producerFrame->setup();
+//      
       buffer = generator.generateVideoOnce(filename, size);
-
-      Name emptySuffix;
-      sequenceProducer->produce(emptySuffix, (uint8_t*)buffer, size);
+//
+      Name wholeSuffix;
+      producerFrame->produce(wholeSuffix, (uint8_t*)buffer, size);
 
       std::cout << "HERE!" << std::endl;
       sleep(300); // because setup() is non-blocking
