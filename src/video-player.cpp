@@ -54,8 +54,8 @@ namespace ndn {
 
     pthread_t thread; 
     int rc;
-    rc = pthread_create(&thread, NULL, playbin_appsrc_thread , (void *)app);
+    rc = pthread_create(&thread, NULL, h264_appsrc_thread , (void *)app);
 
-    std::cout << "playbin_appsrc_init OK! " << std::endl;
+    std::cout << "h264_appsrc_init OK! " << std::endl;
   }
 } // namespace ndn

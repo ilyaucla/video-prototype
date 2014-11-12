@@ -24,6 +24,7 @@ namespace ndn {
     void
     processPayload(const uint8_t* buffer, size_t bufferSize);
     
+
     void
     processStreaminfo(const uint8_t* buffer, size_t bufferSize);
     
@@ -39,6 +40,12 @@ namespace ndn {
     void
     processLeavingInterest(Interest& interest);
     
+    void
+    onRetx(const Interest& interest)
+    {
+      std::cout << "Retransmitted " << interest.getName() << std::endl;
+    }
+
     VideoPlayer player;
   };
 

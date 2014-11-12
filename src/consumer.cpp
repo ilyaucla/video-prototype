@@ -38,13 +38,15 @@ namespace ndn {
 
 
 //      streaminfoConsumer->stop();
-      sleep(10); // because consume() is non-blocking
+      sleep(2); // because consume() is non-blocking
       std::cout << "consume whole start!" <<std::endl;
       
       Name videoName2(filename+"whole");
 
       Consumer* frameConsumer = new Consumer(videoName2, RELIABLE, SEQUENCE);
-      frameConsumer->setContextOption(MUST_BE_FRESH_S, true);
+//      frameConsumer->setContextOption(MUST_BE_FRESH_S, true);
+//      frameConsumer->setContextOption(INTEREST_LIFETIME, 250);
+      frameConsumer->setContextOption(MIN_WINDOW_SIZE, 1);
 /*
       Name videoName(filename);
       Consumer* frameConsumer = new Consumer(videoName, RELIABLE, SEQUENCE);
@@ -54,7 +56,9 @@ namespace ndn {
       frameConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
                                 (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
     
-     frameConsumer->setContextOption(DATA_ENTER_CNTX, 
+      frameConsumer->setContextOption(INTEREST_RETRANSMITTED, 
+                                (ConstInterestCallback)bind(&ConsumerCallback::onRetx, &cb_consumer, _1));
+      frameConsumer->setContextOption(DATA_ENTER_CNTX, 
                                 (DataCallback)bind(&ConsumerCallback::processData, &cb_consumer, _1));
    
       frameConsumer->setContextOption(CONTENT_RETRIEVED, 
@@ -65,7 +69,14 @@ namespace ndn {
 
 //  		frameConsumer->setContextOption(CONTENT_CHUNK_SIZE, 1024*1024*10);
   		frameConsumer->setContextOption(CONTENT_RETRIEVAL_SIZE, 1024*1024*10);
-      frameConsumer->consume(Name());
+      int i = 0;
+      while (i < 2500)
+      {
+        Name frameSuffix(std::to_string(i));
+    //    std::cout << i << " Consume" << std::endl;
+        frameConsumer->consume(frameSuffix);
+        i++;
+      }
 //      frameConsumer->consume(Name());
 
 //      std::cout << "appsrc_init" <<std::endl;

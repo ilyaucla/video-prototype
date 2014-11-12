@@ -29,7 +29,7 @@ namespace ndn {
 
 /* get the video file info first, width, height, format etc. Just get the whole caps info
  */
-      streaminfo = generator.playbin_file_info(filename);
+      streaminfo = generator.h264_file_info(filename);
       std::cout << "Streaminfo(Producer Part):  Size=" << streaminfo.size()<< std::endl;
       std::cout << streaminfo << std::endl;
   
@@ -38,10 +38,10 @@ namespace ndn {
       Producer* producer = new Producer(videoName);
       producer->setup();
       Name streaminfoSuffix("streaminfo");
-      producer->produce(streaminfoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size());
+      producer->produce(streaminfoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size()+1);
 
       std::cout << "Streaminfo OK!" << std::endl;
-      sleep(10); // because setup() is non-blocking
+      sleep(2); // because setup() is non-blocking
       
       std::cout << "Now produce frames" << std::endl;
       Name videoName2(filename + "whole");
@@ -49,14 +49,15 @@ namespace ndn {
       ProducerCallback cb_producer;
       cb_producer.setProducer(producerFrame); // needed for some callback functionality
 
+      producerFrame->setContextOption(SND_BUF_SIZE,100000);
       producerFrame->setContextOption(DATA_LEAVE_CNTX,
           (ConstDataCallback)bind(&ProducerCallback::processOutgoingData, &cb_producer, _1));
 
       producerFrame->setup();
+      generator.h264_generate_frames(filename, producerFrame);
 //      generator.playbin_generate_frames(filename, producerFrame);
 //      There is no need for callback now 
 //      ProducerCallback cb_producer;
-//
 //      
 //      //setting callbacks
 //      producerFrame->setContextOption(INTEREST_ENTER_CNTX,
@@ -66,15 +67,14 @@ namespace ndn {
 //                        (ConstInterestCallback)bind(&ProducerCallback::processInterest, &cb_producer, _1));
   
       //listening
-//      producerFrame->setup();
 //      
-      buffer = generator.generateVideoOnce(filename, size);
+//      buffer = generator.generateVideoOnce(filename, size);
 //
-      Name wholeSuffix;
-      producerFrame->produce(wholeSuffix, (uint8_t*)buffer, size);
+//      Name wholeSuffix;
+//      producerFrame->produce(wholeSuffix, (uint8_t*)buffer, size);
 
       std::cout << "HERE!" << std::endl;
-      sleep(300); // because setup() is non-blocking
+      sleep(30000); // because setup() is non-blocking
 
     }
     catch(std::exception& e) {

@@ -27,6 +27,7 @@ namespace ndn {
     processOutgoingData(const Data& data)
     {
       std::cout << data.getName() << std::endl;
+      std::cout << data.getFinalBlockId() << std::endl;
     }
     void
     processIncomingInterest(const Interest& interest);

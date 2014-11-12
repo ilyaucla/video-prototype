@@ -13,6 +13,9 @@
 #include <iostream>
 #include <deque>
 #include <pthread.h>
+#include <unistd.h>
+#include <gst/app/gstappsrc.h>
+#include <gst/app/gstappsink.h>
 
 namespace ndn {
 
@@ -51,7 +54,37 @@ namespace ndn {
       App s_app;
 
       #define CHUNK_SIZE  1024*1024
+      
+      static void
+      cb_need_data (GstElement *appsrc,
+                    guint       unused_size,
+                    App    *app)
+      {
+        GstBuffer *buffer;
+        GstFlowReturn ret;
+        g_print ("HERE!!");
+        while ((app -> dataQue).size() == 0)
+        {
+//          g_print ("CHOKED\t");
+          //sleep(1);
+        }
+        
+        DataNode tmpNode = (app -> dataQue).front();
 
+        std::cout << "Read Data Chunk" << tmpNode.length <<std::endl;
+        buffer = gst_buffer_new ();
+        buffer = gst_buffer_new_wrapped (tmpNode.data , tmpNode.length);
+        g_signal_emit_by_name (app->appsrc, "push-buffer", buffer, &ret);
+      //  gst_buffer_unref (buffer);
+        if (ret != GST_FLOW_OK) {
+          /* some error, stop sending data */
+          g_print ("ERROR!\t");
+          return ;
+        }
+        (app -> dataQue).pop_front();
+        g_print ("Read Over!\t");
+      }
+      
       static gboolean
       read_data (App * app)
       {
@@ -65,7 +98,7 @@ namespace ndn {
         
         DataNode tmpNode = (app -> dataQue).front();
 
-        std::cout << "Read Data Chunk" << tmpNode.length <<std::endl;
+        std::cout << "Read Data Here appsrc work well! data length " << tmpNode.length <<std::endl;
         buffer = gst_buffer_new ();
         buffer = gst_buffer_new_wrapped (tmpNode.data , tmpNode.length);
         g_signal_emit_by_name (app->appsrc, "push-buffer", buffer, &ret);
@@ -108,6 +141,8 @@ namespace ndn {
       {
         /* get a handle to the appsrc */
         g_object_get (orig, pspec->name, &app->appsrc, NULL);
+        std::cout << app->capstr << std::endl;
+        g_object_set (G_OBJECT (app->appsrc), "caps", gst_caps_from_string((app->capstr).c_str()), NULL);
       
 //        g_object_set (app->appsrc, "size", (gint64) app->length, NULL);
       
@@ -115,6 +150,150 @@ namespace ndn {
          * mainloop. */
         g_signal_connect (app->appsrc, "need-data", G_CALLBACK (start_feed), app);
         g_signal_connect (app->appsrc, "enough-data", G_CALLBACK (stop_feed), app);
+      }
+
+      static void
+      *h264_appsrc_thread (void * threadData)
+      {
+        App *app;
+        app = (App *) threadData;
+
+        GstBus *bus;
+        GstElement *pipeline, *decoder, *videosink;
+        GstCaps *caps;
+        
+//        gint width, height, num, denum;
+//        const char * name, stream-format, alignment;
+
+        /* init GStreamer */
+        gst_init (NULL, NULL);
+        app->loop = g_main_loop_new (NULL, FALSE);
+        
+        /* setup pipeline */
+        pipeline = gst_pipeline_new ("pipeline");
+        app->appsrc = gst_element_factory_make ("appsrc", "source");
+        decoder = gst_element_factory_make ("avdec_h264", "decoder");
+        videosink = gst_element_factory_make ("autovideosink", "videosink");
+        
+        bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
+        gst_bus_add_watch (bus, (GstBusFunc)bus_call, app);
+        gst_object_unref (bus);
+
+        const gchar * streaminfo = app->capstr.c_str();
+        std::cout << "HAHA " << streaminfo << std::endl;
+        /* setup streaminfo */
+
+        caps = gst_caps_from_string(streaminfo); 
+        std::cout << "WHAT" <<gst_caps_to_string (caps) << std::endl;
+        caps = gst_caps_make_writable(caps);
+        GstStructure *str = gst_caps_get_structure (caps, 0);
+//        GstStructure *str =  gst_structure_from_string((app->capstr).c_str());
+        gst_structure_remove_fields (str,"level", "profile", "height", "width", "framerate", "pixel-aspect-ratio", "parsed", NULL);
+////        gst_caps_append_structure(caps, str);
+//        std::cout << gst_caps_to_string (caps) << std::endl;
+//        str = gst_caps_get_structure (capstmp, 0);
+//        if (!gst_structure_get_int (str, "width", &width) ||
+//            !gst_structure_get_int (str, "height", &height)) { g_print ("No width/height available\n");
+//          return;
+//        }
+//
+//        caps = gst_caps_new_simple ("video/x-h264", "stream-format", G_TYPE_STRING, "avc",
+//            "alignment", G_TYPE_STRING, "au", "codec_data", GST_TYPE_BUFFER, "0164001effe1001a6764001eacc8602a0c7e4c0440000003004000000ca3c58b678001000568e9bb2c8b", NULL);
+
+//        caps = gst_caps_new_simple ("video/x-h264", "stream-format", G_TYPE_STRING, "avc",
+//            "alignment", G_TYPE_STRING, "au", NULL);
+        std::cout << "HERE!" << gst_caps_to_string (caps) << std::endl;
+//        gst_app_src_set_caps(GST_APP_SRC(app->appsrc), caps);
+        g_object_set (G_OBJECT (app->appsrc), "caps", caps, NULL);
+
+        /*
+        gboolean link_ok;
+        link_ok = gst_element_link_filtered (app->appsrc, decoder, caps);
+
+        if (!link_ok) {
+          g_warning ("Failed to link appsrc and decoder");
+        }
+        */ 
+        gst_bin_add_many (GST_BIN (pipeline), app->appsrc, decoder, videosink, NULL);
+       // gst_element_link_many (app->appsrc, decoder, videosink, NULL);
+        if(!gst_element_link(app->appsrc, decoder)){
+          g_print("failed to link appsrc and decoder");
+          pthread_exit(NULL);
+        }
+        if(!gst_element_link(decoder, videosink)){
+          g_print("failed to link decoder and videosink");
+          pthread_exit(NULL);
+        }
+        
+        /* setup appsrc */
+//        g_object_set (G_OBJECT (app->appsrc),
+//                      "stream-type", 0,
+//                      "format", GST_FORMAT_TIME, NULL);
+        g_signal_connect (app->appsrc, "need-data", G_CALLBACK (start_feed), app);
+        g_signal_connect (app->appsrc, "enough-data", G_CALLBACK (stop_feed), app);
+        
+        /* play */
+        gst_element_set_state (pipeline, GST_STATE_PLAYING);
+        g_main_loop_run (app->loop);
+        
+        /* clean up */
+        gst_element_set_state (pipeline, GST_STATE_NULL);
+        gst_object_unref (GST_OBJECT (pipeline));
+        g_main_loop_unref (app->loop);
+
+        pthread_exit(NULL);
+      }
+
+      static void
+      *videosink_appsrc_thread (void * threadData)
+      {
+        App *app;
+        app = (App *) threadData;
+
+        GstElement *pipeline, *conv, *videosink;
+        
+        /* init GStreamer */
+        gst_init (NULL, NULL);
+        app->loop = g_main_loop_new (NULL, FALSE);
+        
+        /* setup pipeline */
+        pipeline = gst_pipeline_new ("pipeline");
+        app->appsrc = gst_element_factory_make ("appsrc", "source");
+        conv = gst_element_factory_make ("videoconvert", "conv");
+        videosink = gst_element_factory_make ("autovideosink", "videosink");
+        
+        /* setup */
+        g_object_set (G_OBJECT (app->appsrc), "caps", gst_caps_from_string((app->capstr).c_str()), NULL);
+          /* setup 
+        g_object_set (G_OBJECT (app->appsrc), "caps",
+          gst_caps_new_simple ("video/x-raw",
+          "format", G_TYPE_STRING, "RGB16",
+          "width", G_TYPE_INT, 384,
+          "height", G_TYPE_INT, 288,
+          "framerate", GST_TYPE_FRACTION, 0, 1,
+          NULL), NULL);
+          */
+        gst_bin_add_many (GST_BIN (pipeline), app->appsrc, conv, videosink, NULL);
+        gst_element_link_many (app->appsrc, conv, videosink, NULL);
+        
+        /* setup appsrc */
+        g_object_set (G_OBJECT (app->appsrc),
+                      "stream-type", 0,
+                      "format", GST_FORMAT_TIME, NULL);
+//        g_signal_connect (app->appsrc, "need-data", G_CALLBACK (cb_need_data), app);
+        g_signal_connect (app->appsrc, "need-data", G_CALLBACK (start_feed), app);
+        g_signal_connect (app->appsrc, "enough-data", G_CALLBACK (stop_feed), app);
+        
+        /* play */
+        gst_element_set_state (pipeline, GST_STATE_PLAYING);
+        g_main_loop_run (app->loop);
+        
+        /* clean up */
+        gst_element_set_state (pipeline, GST_STATE_NULL);
+        gst_object_unref (GST_OBJECT (pipeline));
+        g_main_loop_unref (app->loop);
+
+        pthread_exit(NULL);
       }
 
       static void

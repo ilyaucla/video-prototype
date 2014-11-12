@@ -81,9 +81,121 @@ namespace ndn {
     return streaminfo; 
   }
 
+  /* get the caps from h264parse */
+
+  char * 
+  VideoGenerator::h264_file_info (std::string filename)
+  {
+    GstElement *pipeline, *source, *demuxer, *parser, *sink; 
+    GstCaps *caps;
+    GstSample *sample;
+
+    /* Initialisation */ 
+    gst_init (NULL, NULL); 
+    /* Create gstreamer elements */ 
+    pipeline = gst_pipeline_new ("mp4-player"); 
+    source = gst_element_factory_make ("filesrc", "file-source"); 
+    demuxer = gst_element_factory_make ("qtdemux", "demuxer"); 
+    parser = gst_element_factory_make ("h264parse", "parser"); 
+    sink = gst_element_factory_make ("appsink", NULL);
+
+    g_object_set (G_OBJECT (sink), "sync", FALSE, NULL); 
+
+    if (!pipeline || !source || !demuxer || !parser || !sink) { 
+      g_printerr ("One element could not be created. Exiting.\n"); 
+    } 
+    /* Set up the pipeline */ 
+    /* we set the input filename to the source element */ 
+    g_object_set (G_OBJECT (source), "location", filename.c_str() , NULL); 
+    /* we add all elements into the pipeline */ 
+    gst_bin_add_many (GST_BIN (pipeline), 
+    source, demuxer, parser, sink, NULL); 
+    /* we link the elements together */ 
+    gst_element_link (source, demuxer); 
+    gst_element_link_many (parser, sink, NULL); 
+    g_signal_connect (demuxer, "pad-added", G_CALLBACK (on_pad_added), parser); 
+    /* Set the pipeline to "playing" state*/ 
+    gst_element_set_state (pipeline, GST_STATE_PLAYING); 
+    
+    g_signal_emit_by_name (sink, "pull-sample", &sample);
+    caps = gst_sample_get_caps(sample);
+    read_video_props(caps);
+    gst_element_set_state (pipeline, GST_STATE_NULL); 
+
+    return gst_caps_to_string(caps);
+  }
   /*
    *generate frames from the video file, will block several seconds now
    */
+  void 
+  VideoGenerator::h264_generate_frames (std::string filename, Producer * producer)
+  {
+    GstElement *pipeline, *source, *demuxer, *parser, *sink; 
+    GstCaps *caps;
+      
+    GstBuffer *buffer;
+    GstSample *sample;
+    GstMapInfo map;
+
+    /* Initialisation */ 
+    gst_init (NULL, NULL); 
+    /* Create gstreamer elements */ 
+    pipeline = gst_pipeline_new ("mp4-player"); 
+    source = gst_element_factory_make ("filesrc", "file-source"); 
+    demuxer = gst_element_factory_make ("qtdemux", "demuxer"); 
+    parser = gst_element_factory_make ("h264parse", "parser"); 
+    sink = gst_element_factory_make ("appsink", NULL);
+
+    g_object_set (G_OBJECT (sink), "sync", FALSE, NULL); 
+
+    if (!pipeline || !source || !demuxer || !parser || !sink) { 
+      g_printerr ("One element could not be created. Exiting.\n"); 
+    } 
+    /* Set up the pipeline */ 
+    /* we set the input filename to the source element */ 
+    g_object_set (G_OBJECT (source), "location", filename.c_str() , NULL); 
+    /* we add all elements into the pipeline */ 
+    gst_bin_add_many (GST_BIN (pipeline), 
+    source, demuxer, parser, sink, NULL); 
+    /* we link the elements together */ 
+    gst_element_link (source, demuxer); 
+    gst_element_link_many (parser, sink, NULL); 
+    g_signal_connect (demuxer, "pad-added", G_CALLBACK (on_pad_added), parser); 
+    /* Set the pipeline to "playing" state*/ 
+    g_print ("Now playing: %s\n", filename.c_str()); 
+    gst_element_set_state (pipeline, GST_STATE_PLAYING); 
+    time_t time_start = std::time(0);
+    int framenumber = 0;
+    
+    do {
+      g_signal_emit_by_name (sink, "pull-sample", &sample);
+      if (sample == NULL){
+        g_print("Meet the EOS!\n");
+        break;
+        }
+      caps = gst_sample_get_caps(sample);
+      read_video_props(caps);
+      buffer = gst_sample_get_buffer (sample);
+      gst_buffer_map (buffer, &map, GST_MAP_READ);
+      Name frameSuffix(std::to_string(framenumber));
+      std::cout << "Frame number: "<< framenumber <<std::endl;
+      std::cout << "Frame Size: "<< map.size <<std::endl;
+      producer->produce(frameSuffix, (uint8_t *)map.data, map.size);
+      framenumber ++;
+    
+      if (sample)
+        gst_sample_unref (sample);
+      }while (sample != NULL);
+
+    time_t time_end = std::time(0);
+    double seconds = difftime(time_end, time_start);
+    std::cout << seconds << " seconds have passed" << std::endl;
+    
+    /* Iterate */ 
+    gst_element_set_state (pipeline, GST_STATE_NULL); 
+    g_print ("Deleting pipeline\n"); 
+  }
+
   void
   VideoGenerator::playbin_generate_frames (std::string filename, Producer * producer)
   {
@@ -131,7 +243,7 @@ namespace ndn {
 //      info = gst_sample_get_info(sample);
 //      segment = gst_sample_get_segment(sample);
       gst_buffer_map (buffer, &map, GST_MAP_READ);
-      Name frameSuffix("frames/"+std::to_string(framenumber));
+      Name frameSuffix(std::to_string(framenumber));
       std::cout << "Frame number: "<<framenumber <<std::endl;
       producer->produce(frameSuffix, (uint8_t *)map.data, map.size);
       std::cout << "Frame number: "<<framenumber << "FINISHED" <<std::endl;
