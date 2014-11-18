@@ -17,7 +17,6 @@ namespace ndn {
     try {
   
   		std::string filename = "/Users/Loli/video/";
-      std::string streaminfo;
       char *buffer;
       long size = 0;
       VideoGenerator generator;
@@ -29,24 +28,27 @@ namespace ndn {
 
 /* get the video file info first, width, height, format etc. Just get the whole caps info
  */
-      streaminfo = generator.h264_file_info(filename);
-      std::cout << "Streaminfo(Producer Part):  Size=" << streaminfo.size()<< std::endl;
-      std::cout << streaminfo << std::endl;
   
-      Name videoName(filename);
+      Name videoName(filename + "streaminfo");
 
-      Producer* producer = new Producer(videoName);
-      producer->setup();
-      Name streaminfoSuffix("streaminfo");
-      producer->produce(streaminfoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size()+1);
-
-      std::cout << "Streaminfo OK!" << std::endl;
-      sleep(2); // because setup() is non-blocking
-      
-      std::cout << "Now produce frames" << std::endl;
-      Name videoName2(filename + "whole");
-      Producer* producerFrame = new Producer(videoName2);
       ProducerCallback cb_producer;
+      Producer* producerStreaminfo = new Producer(videoName);
+      cb_producer.setProducer(producerStreaminfo); // needed for some callback functionality
+      producerStreaminfo->setContextOption(DATA_LEAVE_CNTX,
+          (ConstDataCallback)bind(&ProducerCallback::processOutgoingData, &cb_producer, _1));
+      producerStreaminfo->setup();
+//      Name streaminfoVideoSuffix("streaminfo/video");
+//      producer->produce(streaminfoVideoSuffix, (uint8_t *)streaminfo[0].c_str(), streaminfo[0].size()+1);
+
+//      Name streaminfoAudioSuffix("streaminfo/audio");
+//      producer->produce(streaminfoAudioSuffix, (uint8_t *)streaminfo[0].c_str(), streaminfo[0].size()+1);
+
+//      std::cout << "Streaminfo Video with Audio OK!" << std::endl;
+//      sleep(2); // because setup() is non-blocking
+      
+//      std::cout << "Now produce frames" << std::endl;
+      Name videoName2(filename + "content");
+      Producer* producerFrame = new Producer(videoName2);
       cb_producer.setProducer(producerFrame); // needed for some callback functionality
 
       producerFrame->setContextOption(SND_BUF_SIZE,100000);
@@ -54,7 +56,8 @@ namespace ndn {
           (ConstDataCallback)bind(&ProducerCallback::processOutgoingData, &cb_producer, _1));
 
       producerFrame->setup();
-      generator.h264_generate_frames(filename, producerFrame);
+      generator.h264_generate_whole(filename, producerStreaminfo, producerFrame);
+//      generator.h264_generate_frames(filename, producerFrame);
 //      generator.playbin_generate_frames(filename, producerFrame);
 //      There is no need for callback now 
 //      ProducerCallback cb_producer;

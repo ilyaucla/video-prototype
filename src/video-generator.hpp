@@ -10,6 +10,7 @@
 #define VIDEO_GENERATOR_HPP
 
 #include <string>
+#include <vector>
 #include <gst/gst.h>
 #include <ndn-cxx/contexts/producer-context.hpp>
 
@@ -29,10 +30,30 @@ namespace ndn {
       playbin_generate_frames (std::string filename, Producer * producer);
       void 
       h264_generate_frames (std::string filename, Producer * producer);
-      char * 
+      void 
+      h264_generate_whole (std::string filename, Producer * producerStreaminfo, Producer * producerFrame);
+      void
       h264_file_info (std::string filename);
 
     private:
+
+      struct GstElement_Duo
+      {
+        GstElement *video;
+        GstElement *audio;
+      };
+
+      struct GstCaps_Duo
+      {
+        GstCaps *video;
+        GstCaps *audio;
+      };
+
+      struct GstSample_Duo
+      {
+        GstSample *video;
+        GstSample *audio;
+      };
 
       static void
       read_video_props (GstCaps *caps)
@@ -62,25 +83,33 @@ namespace ndn {
      GstPad *pad, 
      gpointer data) 
      { 
-       GstPad *sinkpad; 
-       GstCaps *caps;
-       const GstStructure *str;
-       std::string type;
-       GstElement *parser = (GstElement *) data; 
-
-       caps =  gst_pad_get_current_caps (pad);
-       str = gst_caps_get_structure (caps, 0);
-       type = gst_structure_get_name (str);
-     
-       std::cout << "TYPE: " << type << std::endl;
-       if(type.find("video") != std::string::npos)
-       {
-         /* We can now link this pad with the h264parse sink pad */ 
-         g_print ("Dynamic pad created, linking demuxer/parser\n"); 
-         sinkpad = gst_element_get_static_pad (parser, "sink"); 
-         gst_pad_link (pad, sinkpad); 
-         gst_object_unref (sinkpad); 
-       } 
+        GstPad *sinkpad; 
+        GstCaps *caps;
+        GstElement_Duo *parser = (GstElement_Duo *) data;
+      //  GstElement *parser = (GstElement *) data; 
+        GstStructure *str;
+        std::string type;
+        /* We can now link this pad with the h264parse sink pad */ 
+        caps =  gst_pad_get_current_caps (pad);
+        str = gst_caps_get_structure (caps, 0);
+        type = gst_structure_get_name (str);
+      
+        g_print("%s\n", gst_caps_to_string(caps));
+      
+        if(type.find("video") != std::string::npos)
+        {
+          sinkpad = gst_element_get_static_pad (parser->video, "sink"); 
+          gst_pad_link (pad, sinkpad); 
+          gst_object_unref (sinkpad); 
+          g_print ("linking demuxer/h264parse\n"); 
+        }
+        else
+        {
+          sinkpad = gst_element_get_static_pad (parser->audio, "sink"); 
+          gst_pad_link (pad, sinkpad); 
+          gst_object_unref (sinkpad); 
+          g_print ("linking demuxer/accparse\n"); 
+        }
      }
   };
 } // namespace ndn

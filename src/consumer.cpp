@@ -24,7 +24,7 @@ namespace ndn {
       std::cout<<filename<<std::endl;
 
 //      ConsumerCallback cb_consumer;
-      Name videoName(filename);
+      Name videoName(filename + "streaminfo");
       ConsumerCallback cb_consumer;
 
       Consumer* streaminfoConsumer = new Consumer(videoName, RELIABLE, DATAGRAM );
@@ -34,19 +34,17 @@ namespace ndn {
       streaminfoConsumer->setContextOption(CONTENT_RETRIEVED, 
         (ContentCallback)bind(&ConsumerCallback::processStreaminfo, &cb_consumer, _1, _2));
 
-      streaminfoConsumer->consume(Name("streaminfo"));
+      streaminfoConsumer->consume(Name("video"));
 
-
-//      streaminfoConsumer->stop();
       sleep(2); // because consume() is non-blocking
       std::cout << "consume whole start!" <<std::endl;
       
-      Name videoName2(filename+"whole");
+      Name videoName2(filename + "content");
 
       Consumer* frameConsumer = new Consumer(videoName2, RELIABLE, SEQUENCE);
-//      frameConsumer->setContextOption(MUST_BE_FRESH_S, true);
-//      frameConsumer->setContextOption(INTEREST_LIFETIME, 250);
-      frameConsumer->setContextOption(MIN_WINDOW_SIZE, 1);
+      frameConsumer->setContextOption(MUST_BE_FRESH_S, true);
+      frameConsumer->setContextOption(INTEREST_LIFETIME, 200);
+//      frameConsumer->setContextOption(MIN_WINDOW_SIZE, 1);
 /*
       Name videoName(filename);
       Consumer* frameConsumer = new Consumer(videoName, RELIABLE, SEQUENCE);
@@ -68,11 +66,11 @@ namespace ndn {
   //	frameConsumer->setContextOption(RCV_BUF_SIZE, 1024*1024*4);
 
 //  		frameConsumer->setContextOption(CONTENT_CHUNK_SIZE, 1024*1024*10);
-  		frameConsumer->setContextOption(CONTENT_RETRIEVAL_SIZE, 1024*1024*10);
+  		frameConsumer->setContextOption(CONTENT_RETRIEVAL_SIZE, 1024*1024);
       int i = 0;
-      while (i < 2500)
+      while (i < 250)
       {
-        Name frameSuffix(std::to_string(i));
+        Name frameSuffix("video/" + std::to_string(i));
     //    std::cout << i << " Consume" << std::endl;
         frameConsumer->consume(frameSuffix);
         i++;

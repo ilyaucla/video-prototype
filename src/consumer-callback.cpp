@@ -9,12 +9,15 @@
 #include "consumer-callback.hpp"
 #include <string>
 #include <pthread.h>
+#include <ctime>
 
 // Enclosing code in ndn simplifies coding (can also use `using namespace ndn`)
 namespace ndn {
 // Additional nested namespace could be used to prevent/limit name contentions
 
   int times = 0;
+  time_t time_start;
+  time_t time_end;
 
   ConsumerCallback::ConsumerCallback()
   {
@@ -26,13 +29,21 @@ namespace ndn {
   void
   ConsumerCallback::processPayload(const uint8_t* buffer, size_t bufferSize)
   {
+    std::cout << "times " << times <<std::endl;
     std::cout << "bufferSize " << bufferSize <<std::endl;
     std::cout << "@buffer " << &buffer <<std::endl;
-    std::cout << "times " << times <<std::endl;
 
-    player.playbin_appsrc_data(buffer, bufferSize);
-
+//    if(times == 0)
+//      time_start = std::time(0);
+//    if(times == 249)
+//    {
+//       time_end = std::time(0);
+//       double seconds = difftime(time_end, time_start);
+//       std::cout << seconds << " seconds have passed" << std::endl;
+//    }
+    player.h264_appsrc_data(buffer, bufferSize);
     times ++;
+//    std::cout << "over " << std::endl;
   }
   
   void
@@ -44,13 +55,14 @@ namespace ndn {
   //  std::cout << "buffer " << buffer <<std::endl;
  //   std::cout << "streaminfo " << streaminfo <<std::endl;
   //  std::cout << "fileLength " << fileLength <<std::endl;
+    std::cout << "processStreaminfo " << streaminfo << std::endl;
     player.get_streaminfo(streaminfo);
   }
 
   void
   ConsumerCallback::processData(Data& data)
   {
-    std::cout << "DATA IN CNTX" << std::endl;
+//    std::cout << "DATA IN CNTX" << std::endl;
   }
   
   bool
@@ -66,7 +78,7 @@ namespace ndn {
   void
   ConsumerCallback::processLeavingInterest(Interest& interest)
   {
-    std::cout << "LEAVES " << interest.toUri() << std::endl;
-    std::cout << "LEAVES name" << interest.getName() << std::endl;
+//    std::cout << "LEAVES " << interest.toUri() << std::endl;
+//    std::cout << "LEAVES name " << interest.getName() << std::endl;
   }  
 } // namespace ndn

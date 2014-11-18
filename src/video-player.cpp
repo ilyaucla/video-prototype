@@ -10,6 +10,8 @@
 
 namespace ndn {
 
+  #define BUFFER_SIZE  1024*1024*4
+
   VideoPlayer::VideoPlayer()
   {
   }
@@ -17,44 +19,60 @@ namespace ndn {
   void
   VideoPlayer::get_streaminfo(std::string streaminfo)
   {
-    App *app = &s_app;
-    app->capstr = streaminfo; 
-    playbin_appsrc_init();
+    VideoAudio *va =  &s_va;
+
+    App *video = &(va->v_app);
+
+    video->size = BUFFER_SIZE; 
+    video->data = new guint8[video->size];
+    video->capstr = streaminfo; 
+    std::cout << "LALALA streaminfo " << streaminfo << std::endl;
+    h264_appsrc_init();
   }
 
   void
-  VideoPlayer::playbin_appsrc_data(const uint8_t* buffer, size_t bufferSize )
+  VideoPlayer::h264_appsrc_data(const uint8_t* buffer, size_t bufferSize )
   {
-    App *app = &s_app;
+    VideoAudio *va = &s_va;
+    App *video = &(va->v_app);
 
     /* get some vitals, this will be used to read data from the mmapped file and
      * feed it to appsrc. */
-    DataNode dataNode;
-    uint8_t* bufferTmp = new uint8_t[bufferSize];
-    memcpy (bufferTmp, buffer, bufferSize);
-    dataNode.length = bufferSize;
-    dataNode.data = (guint8 *) bufferTmp;
-    (app->dataQue).push_back(dataNode);
+    OffsetRecord dataNode;
+    if((video -> dataQue).size() == 0)
+    {
+      dataNode.offset = 0;
+      dataNode.length = bufferSize;
+    }else
+    {
+      OffsetRecord tmpNode = (video -> dataQue).back();
+      dataNode.offset = tmpNode.offset + tmpNode.length;
+      if(dataNode.offset + bufferSize >= video->size)
+        dataNode.offset = 0;
+      dataNode.length = bufferSize;
+    }
+    memcpy (video->data + dataNode.offset, buffer, dataNode.length);
+    (video->dataQue).push_back(dataNode);
 
     std::cout << "CP Data Done! " << bufferSize <<std::endl;
-//    std::cout << app->capstr << std::endl;
+//    std::cout << video->capstr << std::endl;
   }
 
 /*
- * First INIT the playbin_appsrc using thread
+ * First INIT the h264_appsrc using thread
  * waiting in a loop
  */
   void
-  VideoPlayer::playbin_appsrc_init()
+  VideoPlayer::h264_appsrc_init()
   {
-    App *app = &s_app;
+    VideoAudio *va = &s_va;
 
     /* get some vitals, this will be used to read data from the mmapped file and
      * feed it to appsrc. */
 
     pthread_t thread; 
     int rc;
-    rc = pthread_create(&thread, NULL, h264_appsrc_thread , (void *)app);
+    rc = pthread_create(&thread, NULL, h264_appsrc_thread , (void *)va);
 
     std::cout << "h264_appsrc_init OK! " << std::endl;
   }
