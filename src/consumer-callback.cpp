@@ -15,7 +15,8 @@
 namespace ndn {
 // Additional nested namespace could be used to prevent/limit name contentions
 
-  int times = 0;
+  int times_video = 0;
+  int times_audio = 0;
   time_t time_start;
   time_t time_end;
 
@@ -29,21 +30,23 @@ namespace ndn {
   void
   ConsumerCallback::processPayload(const uint8_t* buffer, size_t bufferSize)
   {
-    std::cout << "times " << times <<std::endl;
-    std::cout << "bufferSize " << bufferSize <<std::endl;
-    std::cout << "@buffer " << &buffer <<std::endl;
-
-//    if(times == 0)
-//      time_start = std::time(0);
-//    if(times == 249)
-//    {
-//       time_end = std::time(0);
-//       double seconds = difftime(time_end, time_start);
-//       std::cout << seconds << " seconds have passed" << std::endl;
-//    }
+    std::cout << "video times " << times_video <<std::endl;
+    std::cout << "video bufferSize " << bufferSize <<std::endl;
+//    std::cout << "@buffer " << &buffer <<std::endl;
     player.h264_appsrc_data(buffer, bufferSize);
-    times ++;
-//    std::cout << "over " << std::endl;
+    times_video ++;
+    std::cout << "video over " << std::endl;
+  }
+
+  void
+  ConsumerCallback::processPayloadAudio(const uint8_t* buffer, size_t bufferSize)
+  {
+    std::cout << "audio times " << times_audio <<std::endl;
+    std::cout << "audio bufferSize " << bufferSize <<std::endl;
+//    std::cout << "@buffer " << &buffer <<std::endl;
+    player.h264_appsrc_data_audio(buffer, bufferSize);
+    times_audio ++;
+    std::cout << "audio over " << std::endl;
   }
   
   void
@@ -57,6 +60,14 @@ namespace ndn {
   //  std::cout << "fileLength " << fileLength <<std::endl;
     std::cout << "processStreaminfo " << streaminfo << std::endl;
     player.get_streaminfo(streaminfo);
+  }
+
+  void
+  ConsumerCallback::processStreaminfoAudio(const uint8_t* buffer, size_t bufferSize)
+  {
+    std::string streaminfo((char*) buffer);
+    std::cout << "processStreaminfo_audio " << streaminfo << std::endl;
+    player.get_streaminfo_audio(streaminfo);
   }
 
   void

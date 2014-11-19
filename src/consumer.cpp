@@ -23,7 +23,6 @@ namespace ndn {
   			filename += "duoyan.mp4";
       std::cout<<filename<<std::endl;
 
-//      ConsumerCallback cb_consumer;
       Name videoName(filename + "streaminfo");
       ConsumerCallback cb_consumer;
 
@@ -36,6 +35,15 @@ namespace ndn {
 
       streaminfoConsumer->consume(Name("video"));
 
+      Consumer* audioinfoConsumer = new Consumer(videoName, RELIABLE, DATAGRAM );
+      audioinfoConsumer->setContextOption(MUST_BE_FRESH_S, true);
+      audioinfoConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
+        (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
+      audioinfoConsumer->setContextOption(CONTENT_RETRIEVED, 
+        (ContentCallback)bind(&ConsumerCallback::processStreaminfoAudio, &cb_consumer, _1, _2));
+
+      audioinfoConsumer->consume(Name("audio"));
+
       sleep(2); // because consume() is non-blocking
       std::cout << "consume whole start!" <<std::endl;
       
@@ -45,11 +53,6 @@ namespace ndn {
       frameConsumer->setContextOption(MUST_BE_FRESH_S, true);
       frameConsumer->setContextOption(INTEREST_LIFETIME, 200);
 //      frameConsumer->setContextOption(MIN_WINDOW_SIZE, 1);
-/*
-      Name videoName(filename);
-      Consumer* frameConsumer = new Consumer(videoName, RELIABLE, SEQUENCE);
-      ConsumerCallback cb_consumer;
- */     
      // there is no need for other callback now
       frameConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
                                 (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
@@ -67,18 +70,40 @@ namespace ndn {
 
 //  		frameConsumer->setContextOption(CONTENT_CHUNK_SIZE, 1024*1024*10);
   		frameConsumer->setContextOption(CONTENT_RETRIEVAL_SIZE, 1024*1024);
-      int i = 0;
-      while (i < 250)
-      {
-        Name frameSuffix("video/" + std::to_string(i));
-    //    std::cout << i << " Consume" << std::endl;
-        frameConsumer->consume(frameSuffix);
-        i++;
-      }
-//      frameConsumer->consume(Name());
 
-//      std::cout << "appsrc_init" <<std::endl;
-      //cb_consumer.player.playbin_appsrc_init ();
+      Consumer* sampleConsumer = new Consumer(videoName2, RELIABLE, SEQUENCE);
+      sampleConsumer->setContextOption(MUST_BE_FRESH_S, true);
+      sampleConsumer->setContextOption(INTEREST_LIFETIME, 200);
+     // there is no need for other callback now
+      sampleConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
+                                (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
+    
+      sampleConsumer->setContextOption(INTEREST_RETRANSMITTED, 
+                                (ConstInterestCallback)bind(&ConsumerCallback::onRetx, &cb_consumer, _1));
+      sampleConsumer->setContextOption(DATA_ENTER_CNTX, 
+                                (DataCallback)bind(&ConsumerCallback::processData, &cb_consumer, _1));
+   
+      sampleConsumer->setContextOption(CONTENT_RETRIEVED, 
+                                (ContentCallback)bind(&ConsumerCallback::processPayloadAudio, &cb_consumer, _1, _2));
+ 
+      int i = 0;
+      time_t time_start_0 = std::time(0);
+      std::cout << "Before consume " << time_start_0 << std::endl;
+
+      cb_consumer.player.consume_whole(frameConsumer, sampleConsumer);
+//      while (i < 25*60*5)
+//      {
+//        Name frameSuffix("video/" + std::to_string(i));
+//        frameConsumer->consume(frameSuffix);
+//        Name sampleSuffix("audio/" + std::to_string(i));
+//        sampleConsumer->consume(sampleSuffix);
+//        i++;
+//      }
+      time_t time_end_0  = std::time(0);
+      std::cout << "After consume " << time_end_0 << std::endl;
+      double seconds = difftime(time_end_0, time_start_0);
+      std::cout << seconds << " seconds have passed" << std::endl;
+
       sleep(3000); // because consume() is non-blocking
       
     }

@@ -24,9 +24,14 @@ namespace ndn {
     void
     processPayload(const uint8_t* buffer, size_t bufferSize);
     
-
     void
     processStreaminfo(const uint8_t* buffer, size_t bufferSize);
+
+    void
+    processPayloadAudio(const uint8_t* buffer, size_t bufferSize);
+    
+    void
+    processStreaminfoAudio(const uint8_t* buffer, size_t bufferSize);
     
     void
     processData(Data& data);

@@ -10,8 +10,6 @@
 
 namespace ndn {
 
-  #define BUFFER_SIZE  1024*1024*4
-
   VideoPlayer::VideoPlayer()
   {
   }
@@ -20,13 +18,20 @@ namespace ndn {
   VideoPlayer::get_streaminfo(std::string streaminfo)
   {
     VideoAudio *va =  &s_va;
+    App *app = &(va->v_app);
+    app->capstr = streaminfo; 
+    std::cout << "Video streaminfo " << streaminfo << std::endl;
+  }
 
-    App *video = &(va->v_app);
-
-    video->size = BUFFER_SIZE; 
-    video->data = new guint8[video->size];
-    video->capstr = streaminfo; 
-    std::cout << "LALALA streaminfo " << streaminfo << std::endl;
+  void
+  VideoPlayer::get_streaminfo_audio(std::string streaminfo)
+  {
+    VideoAudio *va =  &s_va;
+    App *app = &(va->a_app);
+    app->capstr = streaminfo; 
+    pthread_mutex_init(&(app->count_mutex), NULL);
+    pthread_cond_init (&(app->count_cond), NULL);
+    std::cout << "Audio streaminfo " << streaminfo << std::endl;
     h264_appsrc_init();
   }
 
@@ -34,28 +39,40 @@ namespace ndn {
   VideoPlayer::h264_appsrc_data(const uint8_t* buffer, size_t bufferSize )
   {
     VideoAudio *va = &s_va;
-    App *video = &(va->v_app);
-
+    App *app = &(va->v_app);
     /* get some vitals, this will be used to read data from the mmapped file and
      * feed it to appsrc. */
-    OffsetRecord dataNode;
-    if((video -> dataQue).size() == 0)
-    {
-      dataNode.offset = 0;
-      dataNode.length = bufferSize;
-    }else
-    {
-      OffsetRecord tmpNode = (video -> dataQue).back();
-      dataNode.offset = tmpNode.offset + tmpNode.length;
-      if(dataNode.offset + bufferSize >= video->size)
-        dataNode.offset = 0;
-      dataNode.length = bufferSize;
-    }
-    memcpy (video->data + dataNode.offset, buffer, dataNode.length);
-    (video->dataQue).push_back(dataNode);
+    DataNode dataNode;
+    uint8_t* bufferTmp = new uint8_t[bufferSize];
+    memcpy (bufferTmp, buffer, bufferSize);
+    dataNode.length = bufferSize;
+    dataNode.data = (guint8 *) bufferTmp;
+    (app->dataQue).push_back(dataNode);
+    pthread_mutex_lock(&(app->count_mutex));
+    if((app->dataQue).size() >= app->rate)
+       pthread_cond_signal(&(app->count_cond));
+    pthread_mutex_unlock(&(app->count_mutex));
 
-    std::cout << "CP Data Done! " << bufferSize <<std::endl;
-//    std::cout << video->capstr << std::endl;
+    std::cout << "CP Video Done! " << bufferSize <<std::endl;
+  }
+
+  void
+  VideoPlayer::h264_appsrc_data_audio(const uint8_t* buffer, size_t bufferSize )
+  {
+    VideoAudio *va = &s_va;
+    App *app = &(va->a_app);
+    DataNode dataNode;
+    uint8_t* bufferTmp = new uint8_t[bufferSize];
+    memcpy (bufferTmp, buffer, bufferSize);
+    dataNode.length = bufferSize;
+    dataNode.data = (guint8 *) bufferTmp;
+    (app->dataQue).push_back(dataNode);
+    pthread_mutex_lock(&(app->count_mutex));
+    if((app->dataQue).size() >= app->rate)
+       pthread_cond_signal(&(app->count_cond));
+    pthread_mutex_unlock(&(app->count_mutex));
+
+    std::cout << "CP Audio Done! " << bufferSize <<std::endl;
   }
 
 /*
@@ -66,14 +83,30 @@ namespace ndn {
   VideoPlayer::h264_appsrc_init()
   {
     VideoAudio *va = &s_va;
-
-    /* get some vitals, this will be used to read data from the mmapped file and
-     * feed it to appsrc. */
-
     pthread_t thread; 
     int rc;
     rc = pthread_create(&thread, NULL, h264_appsrc_thread , (void *)va);
-
     std::cout << "h264_appsrc_init OK! " << std::endl;
+  }
+/* Call Consume Here From the start*/
+  void
+  VideoPlayer::consume_whole(Consumer *frameConsumer, Consumer *sampleConsumer)
+  {
+    VideoAudio *va = &s_va;
+    App *video = &(va->v_app);
+    App *audio = &(va->a_app);
+    for(int seconds = 0; seconds < 60*5 ; seconds++)
+    {
+      for(int i=0; i< video->rate; i++)
+      {
+        Name frameSuffix("video/" + std::to_string(seconds*video->rate + i));
+        frameConsumer->consume(frameSuffix);
+      }
+      for(int j=0; j< audio->rate; j++)
+      {
+        Name sampleSuffix("audio/" + std::to_string(seconds*audio->rate + j));
+        sampleConsumer->consume(sampleSuffix);
+      }
+    }
   }
 } // namespace ndn
