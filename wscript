@@ -33,7 +33,9 @@ def configure(conf):
     if conf.options.with_examples:
         conf.env['WITH_EXAMPLES'] = True
 
-    USED_BOOST_LIBS = ['system', 'iostreams', 'filesystem', 'random']
+    USED_BOOST_LIBS = ['system', 'filesystem', 'date_time', 'iostreams',
+                      'regex', 'program_options', 'chrono', 'random']
+#    ['system', 'iostreams', 'filesystem', 'random']
     if conf.env['WITH_TESTS']:
         USED_BOOST_LIBS += ['unit_test_framework']
     conf.check_boost(lib=USED_BOOST_LIBS, mandatory=True)
@@ -60,26 +62,26 @@ def build(bld):
   
     bld(target="producer_e",
         features=["cxx", "cxxprogram"],
-        source= "src/producer_e.cpp src/video-generator.cpp src/producer-callback.cpp",
-        use='NDN_CXX BOOST GSTREAMER',
+        source= "src/producer_e.cpp src/producer-callback.cpp",
+        use='BOOST NDN_CXX PTHREAD',
         )
 
     bld(target="producer",
         features=["cxx", "cxxprogram"],
         source= "src/producer.cpp src/video-generator.cpp src/producer-callback.cpp",
-        use='NDN_CXX BOOST GSTREAMER',
+        use='PTHREAD GSTREAMER NDN_CXX BOOST',
         )
 
     bld(target="consumer_e",
         features=["cxx", "cxxprogram"],
-        source= "src/consumer_e.cpp src/video-player.cpp src/consumer-callback.cpp",
-        use='NDN_CXX BOOST GSTREAMER PTHREAD',
+        source= "src/consumer_e.cpp src/consumer-callback.cpp src/video-player.cpp",
+        use='PTHREAD GSTREAMER BOOST NDN_CXX',
         )
       
     bld(target="consumer",
         features=["cxx", "cxxprogram"],
         source= "src/consumer.cpp src/video-player.cpp src/consumer-callback.cpp",
-        use='NDN_CXX BOOST GSTREAMER PTHREAD',
+        use='PTHREAD GSTREAMER BOOST NDN_CXX',
         )
 
     bld(target="test",
