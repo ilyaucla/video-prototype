@@ -32,6 +32,8 @@ namespace ndn {
       h264_generate_frames (std::string filename, Producer * producer);
       void 
       h264_generate_whole (std::string filename, Producer * producerStreaminfo, Producer * producerFrame);
+      void 
+      h264_generate_capture (Producer * producerStreaminfo, Producer * producerFrame);
       void
       h264_file_info (std::string filename);
 

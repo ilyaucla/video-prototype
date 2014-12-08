@@ -7,10 +7,45 @@
 
 #include "consumer-callback.hpp"
 #include <pthread.h>
+#include <ndn-cxx/security/validator.hpp>
 
 // Enclosing code in ndn simplifies coding (can also use `using namespace ndn`)
 namespace ndn {
 // Additional nested namespace could be used to prevent/limit name contentions
+
+#define IDENTITY_NAME "/Lijing/Wang"
+
+class Verificator
+{
+public:
+  Verificator()
+  {
+    Name identity(IDENTITY_NAME);
+    Name keyName = m_keyChain.getDefaultKeyNameForIdentity(identity);
+    m_publicKey = m_keyChain.getPublicKey(keyName); 
+  };
+  
+  bool
+  onPacket(Data& data)
+  {
+    return true;
+    if (Validator::verifySignature(data, *m_publicKey))
+    {
+      std::cout << "Verified" << std::endl;
+      return true;
+    }
+    else
+    {
+      std::cout << "NOT Verified" << std::endl;
+      return false;
+    }
+  }
+  
+private:
+  KeyChain m_keyChain;
+  shared_ptr<PublicKey> m_publicKey;
+};
+
   int
   main(int argc, char** argv)
   {
@@ -47,20 +82,25 @@ namespace ndn {
       sleep(2); // because consume() is non-blocking
       std::cout << "consume whole start!" <<std::endl;
       
+      Verificator* verificator = new Verificator();
       Name videoName2(filename + "content");
 
       Consumer* frameConsumer = new Consumer(videoName2, RELIABLE, SEQUENCE);
+//      frameConsumer->setContextOption(EMBEDDED_MANIFESTS, true);
       frameConsumer->setContextOption(MUST_BE_FRESH_S, true);
       frameConsumer->setContextOption(INTEREST_LIFETIME, 200);
 //      frameConsumer->setContextOption(MIN_WINDOW_SIZE, 1);
      // there is no need for other callback now
-      frameConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
-                                (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
-    
-      frameConsumer->setContextOption(INTEREST_RETRANSMITTED, 
-                                (ConstInterestCallback)bind(&ConsumerCallback::onRetx, &cb_consumer, _1));
-      frameConsumer->setContextOption(DATA_ENTER_CNTX, 
-                                (DataCallback)bind(&ConsumerCallback::processData, &cb_consumer, _1));
+      frameConsumer->setContextOption(DATA_TO_VERIFY,
+                      (DataVerificationCallback)bind(&Verificator::onPacket, verificator, _1));
+
+//      frameConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
+//                                (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
+//    
+//      frameConsumer->setContextOption(INTEREST_RETRANSMITTED, 
+//                                (ConstInterestCallback)bind(&ConsumerCallback::onRetx, &cb_consumer, _1));
+//      frameConsumer->setContextOption(DATA_ENTER_CNTX, 
+//                                (DataCallback)bind(&ConsumerCallback::processData, &cb_consumer, _1));
    
       frameConsumer->setContextOption(CONTENT_RETRIEVED, 
                                 (ContentCallback)bind(&ConsumerCallback::processPayload, &cb_consumer, _1, _2));
@@ -72,16 +112,20 @@ namespace ndn {
   		frameConsumer->setContextOption(CONTENT_RETRIEVAL_SIZE, 1024*1024);
 
       Consumer* sampleConsumer = new Consumer(videoName2, RELIABLE, SEQUENCE);
+//      sampleConsumer->setContextOption(EMBEDDED_MANIFESTS, true);
       sampleConsumer->setContextOption(MUST_BE_FRESH_S, true);
       sampleConsumer->setContextOption(INTEREST_LIFETIME, 200);
      // there is no need for other callback now
-      sampleConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
-                                (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
+ //     sampleConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
+ //                               (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
     
-      sampleConsumer->setContextOption(INTEREST_RETRANSMITTED, 
-                                (ConstInterestCallback)bind(&ConsumerCallback::onRetx, &cb_consumer, _1));
-      sampleConsumer->setContextOption(DATA_ENTER_CNTX, 
-                                (DataCallback)bind(&ConsumerCallback::processData, &cb_consumer, _1));
+      sampleConsumer->setContextOption(DATA_TO_VERIFY,
+                      (DataVerificationCallback)bind(&Verificator::onPacket, verificator, _1));
+
+//      sampleConsumer->setContextOption(INTEREST_RETRANSMITTED, 
+//                                (ConstInterestCallback)bind(&ConsumerCallback::onRetx, &cb_consumer, _1));
+//      sampleConsumer->setContextOption(DATA_ENTER_CNTX, 
+//                                (DataCallback)bind(&ConsumerCallback::processData, &cb_consumer, _1));
    
       sampleConsumer->setContextOption(CONTENT_RETRIEVED, 
                                 (ContentCallback)bind(&ConsumerCallback::processPayloadAudio, &cb_consumer, _1, _2));

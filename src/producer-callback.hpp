@@ -26,7 +26,7 @@ namespace ndn {
     void
     processOutgoingData(const Data& data)
     {
-      std::cout << data.getName() << std::endl;
+      std::cout << "OutgoingData " << data.getName() << std::endl;
 //      std::cout << data.getFinalBlockId() << std::endl;
     }
     void

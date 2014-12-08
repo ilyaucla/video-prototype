@@ -170,6 +170,92 @@ namespace ndn {
       }
 
       static void
+      *capture_thread (void * threadData)
+      {
+        VideoAudio * va;
+        va = (VideoAudio *) threadData;
+
+        GstBus *bus;
+        GMainLoop *loop;
+        GstElement *pipeline;
+        App *video = &(va -> v_app);
+        App *audio = &(va -> a_app);
+        
+        /* init GStreamer */
+        gst_init (NULL, NULL);
+        loop = g_main_loop_new (NULL, FALSE);
+        /* setup pipeline */
+        pipeline = gst_pipeline_new ("pipeline");
+/**********   Video Part **************/
+        video->appsrc = gst_element_factory_make ("appsrc", "video_source");
+        video->queue = gst_element_factory_make("queue", "video_queue");
+        video->decoder = gst_element_factory_make ("avdec_h264", "video_decoder");
+        video->sink = gst_element_factory_make ("autovideosink", "video_sink");
+        const gchar * streaminfo = video->capstr.c_str();
+        /* setup streaminfo */
+        GstCaps *caps = gst_caps_from_string(streaminfo); 
+//        gint width, height, num, denum;
+//        const char * name, stream-format, alignment;
+//        caps = gst_caps_make_writable(caps);
+        GstStructure *str = gst_caps_get_structure (caps, 0);
+        int num, denom;
+        gst_structure_get_fraction (str, "framerate", &num, &denom);
+//        gst_structure_remove_fields (str,"level", "profile", "height", "width", "framerate", "pixel-aspect-ratio", "parsed", NULL);
+        video->rate = ceil(num/double(denom)); //FIX ME
+        std::cout << "video->rate " << video->rate << std::endl; 
+
+        g_object_set (G_OBJECT (video->appsrc), "caps", caps, NULL);
+        gst_bin_add_many (GST_BIN (pipeline), video->appsrc, video->queue, video->decoder, video->sink, NULL);
+        gst_element_link_many (video->appsrc, video->queue, video->decoder, video->sink, NULL);
+        /* setup appsrc */
+        g_signal_connect (video->appsrc, "need-data", G_CALLBACK (start_feed), video);
+        g_signal_connect (video->appsrc, "enough-data", G_CALLBACK (stop_feed), video);
+/**********   Video Part Over**************/
+
+/******* Audio Part *********************/
+        audio->appsrc = gst_element_factory_make ("appsrc", "audio_source");
+        audio->queue = gst_element_factory_make("queue", "audio_queue");
+        audio->decoder = gst_element_factory_make ("faad", "audio_decoder"); 
+        audio->sink = gst_element_factory_make ("autoaudiosink", "audio_sink");
+        const gchar * streaminfo_audio = audio->capstr.c_str();
+        /* setup streaminfo */
+        GstCaps *caps_audio =  gst_caps_from_string(streaminfo_audio); 
+        GstStructure *str_audio = gst_caps_get_structure (caps_audio, 0);
+        int samplerate;
+        gst_structure_get_int (str_audio, "rate", &samplerate);
+        audio->rate = samplerate/1000; //FIX ME
+        std::cout << "audio->rate " << audio->rate << std::endl; 
+      
+        g_object_set (G_OBJECT (audio->appsrc), "caps", caps_audio, NULL);
+        gst_bin_add_many (GST_BIN (pipeline), audio->appsrc, audio->queue, audio->decoder, audio->sink, NULL);
+        gst_element_link_many (audio->appsrc, audio->queue, audio->decoder, audio->sink, NULL);
+        /* setup appsrc */
+        g_signal_connect (audio->appsrc, "need-data", G_CALLBACK (start_feed), audio);
+        g_signal_connect (audio->appsrc, "enough-data", G_CALLBACK (stop_feed), audio);
+/*********Audio Part Over **************/        
+
+        /* Set bus */
+        bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
+        gst_bus_add_watch (bus, (GstBusFunc)bus_call, pipeline);
+        gst_object_unref (bus);
+        /* play */
+        gst_element_set_state (pipeline, GST_STATE_PLAYING);
+        g_main_loop_run (loop);
+        
+        /* clean up */
+        gst_element_set_state (pipeline, GST_STATE_NULL);
+        gst_object_unref (GST_OBJECT (pipeline));
+        g_main_loop_unref (loop);
+
+        pthread_exit(NULL);
+      }
+
+      /* 
+       * This works well for playing back MP4 Video with Audio 
+       * Lijig Wang
+       * 2014/12/04 
+       */
+      static void
       *h264_appsrc_thread (void * threadData)
       {
         VideoAudio * va;

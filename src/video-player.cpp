@@ -95,7 +95,8 @@ namespace ndn {
     VideoAudio *va = &s_va;
     App *video = &(va->v_app);
     App *audio = &(va->a_app);
-    for(int seconds = 0; seconds < 60*5 ; seconds++)
+    std::cout << "Inside the consume_whole! " <<std::endl;
+    for(int seconds = 0; seconds < 60*10 ; seconds++)
     {
       for(int i=0; i< video->rate; i++)
       {

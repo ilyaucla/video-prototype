@@ -27,13 +27,13 @@ namespace ndn {
   void
   ProducerCallback::processInterest(const Interest& interest)
   {
-    std::cout << "REPLY TO " << interest.toUri() << std::endl;
+    std::cout << "processInterest " << interest.toUri() << std::endl;
   }
   
   void
   ProducerCallback::processIncomingInterest(const Interest& interest)
   {
-    std::cout << "COMES IN " << interest.getName() << std::endl;
+    std::cout << "processIncomingInterest " << interest.getName() << std::endl;
   }
   
   bool

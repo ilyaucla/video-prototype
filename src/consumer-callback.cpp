@@ -35,7 +35,7 @@ namespace ndn {
 //    std::cout << "@buffer " << &buffer <<std::endl;
     player.h264_appsrc_data(buffer, bufferSize);
     times_video ++;
-    std::cout << "video over " << std::endl;
+    std::cout << "processPayload video over " << std::endl;
   }
 
   void
@@ -46,7 +46,7 @@ namespace ndn {
 //    std::cout << "@buffer " << &buffer <<std::endl;
     player.h264_appsrc_data_audio(buffer, bufferSize);
     times_audio ++;
-    std::cout << "audio over " << std::endl;
+    std::cout << "processPayload audio over " << std::endl;
   }
   
   void
@@ -73,7 +73,7 @@ namespace ndn {
   void
   ConsumerCallback::processData(Data& data)
   {
-//    std::cout << "DATA IN CNTX" << std::endl;
+    std::cout << "DATA IN CNTX" << data.getFinalBlockId() << std::endl;
   }
   
   bool
@@ -89,7 +89,7 @@ namespace ndn {
   void
   ConsumerCallback::processLeavingInterest(Interest& interest)
   {
-//    std::cout << "LEAVES " << interest.toUri() << std::endl;
+    std::cout << "LEAVES " << interest.toUri() << std::endl;
 //    std::cout << "LEAVES name " << interest.getName() << std::endl;
   }  
 } // namespace ndn
