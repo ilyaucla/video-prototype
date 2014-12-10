@@ -260,11 +260,11 @@ namespace ndn {
   {
     GstElement *pipeline, *source, *demuxer; 
     GstElement_Duo queue, parser, sink;
-    GstCaps *caps;
-    GstSample *sample;
-    std::string streaminfo;
-    GstBuffer *buffer;
-    GstMapInfo map;
+//    GstCaps *caps;
+//    GstSample *sample;
+//    std::string streaminfo;
+//    GstBuffer *buffer;
+//    GstMapInfo map;
   
     /* Initialisation */ 
     gst_init (NULL, NULL); 

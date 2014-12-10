@@ -31,12 +31,12 @@ public:
   //  return true;
     if (Validator::verifySignature(data, *m_publicKey))
     {
-      std::cout << "Verified" << std::endl;
+      std::cout << "Verified Name:" << data.getName() <<  std::endl;
       return true;
     }
     else
     {
-      std::cout << "NOT Verified" << std::endl;
+      std::cout << "NOT Verified" << data.getName() << std::endl;
       return false;
     }
   }
@@ -98,13 +98,13 @@ private:
   		videoConsumer->setContextOption(CONTENT_RETRIEVAL_SIZE, 1024*1024);
 
 //      videoConsumer->setContextOption(MIN_WINDOW_SIZE, 1);
-//      videoConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
-//                                (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
-//    
-//      videoConsumer->setContextOption(INTEREST_RETRANSMITTED, 
-//                                (ConstInterestCallback)bind(&ConsumerCallback::onRetx, &cb_consumer, _1));
-//      videoConsumer->setContextOption(DATA_ENTER_CNTX, 
-//                                (DataCallback)bind(&ConsumerCallback::processData, &cb_consumer, _1));
+      videoConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
+                                (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
+    
+      videoConsumer->setContextOption(INTEREST_RETRANSMITTED, 
+                                (ConstInterestCallback)bind(&ConsumerCallback::onRetx, &cb_consumer, _1));
+      videoConsumer->setContextOption(DATA_ENTER_CNTX, 
+                                (DataCallback)bind(&ConsumerCallback::processData, &cb_consumer, _1));
  
 //	    videoConsumer->setContextOption(SND_BUF_SIZE, 1024*1024*5);
 //    	videoConsumer->setContextOption(RCV_BUF_SIZE, 1024*1024*4);
@@ -119,8 +119,14 @@ private:
                       (DataVerificationCallback)bind(&Verificator::onPacket, verificator, _1));
       audioConsumer->setContextOption(CONTENT_RETRIEVED, 
                                 (ContentCallback)bind(&ConsumerCallback::processPayloadAudio, &cb_consumer, _1, _2));
- 
-      int i = 0;
+
+      audioConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
+                                (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
+      audioConsumer->setContextOption(INTEREST_RETRANSMITTED, 
+                                (ConstInterestCallback)bind(&ConsumerCallback::onRetx, &cb_consumer, _1));
+      audioConsumer->setContextOption(DATA_ENTER_CNTX, 
+                                (DataCallback)bind(&ConsumerCallback::processData, &cb_consumer, _1));
+//      int i = 0;
       time_t time_start_0 = std::time(0);
       std::cout << "Before consume " << time_start_0 << std::endl;
 

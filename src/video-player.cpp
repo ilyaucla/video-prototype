@@ -9,6 +9,9 @@
 
 
 namespace ndn {
+  
+  int t_video = 0;
+  int t_audio = 0;
 
   VideoPlayer::VideoPlayer()
   {
@@ -48,6 +51,8 @@ namespace ndn {
     dataNode.length = bufferSize;
     dataNode.data = (guint8 *) bufferTmp;
     (app->dataQue).push_back(dataNode);
+    std::cout << "video times h264_appsrc_data " << t_video <<std::endl;
+    t_video ++;
 //    pthread_mutex_lock(&(app->count_mutex));
 //    if((app->dataQue).size() >= app->rate)
 //       pthread_cond_signal(&(app->count_cond));
@@ -67,6 +72,8 @@ namespace ndn {
     dataNode.length = bufferSize;
     dataNode.data = (guint8 *) bufferTmp;
     (app->dataQue).push_back(dataNode);
+    std::cout << "video times h264_appsrc_data " << t_audio <<std::endl;
+    t_audio ++;
 //    pthread_mutex_lock(&(app->count_mutex));
 //    if((app->dataQue).size() >= app->rate)
 //       pthread_cond_signal(&(app->count_cond));

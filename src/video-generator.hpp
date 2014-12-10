@@ -131,7 +131,10 @@ private:
         sampleProducer = new Producer(videoName_content);
         sampleCB.setProducer(sampleProducer); // needed for some callback functionality
         if(pro->name == "video")
+        {
+          std::cout << "I'm video~ "<<std::endl;
           sampleProducer->setContextOption(EMBEDDED_MANIFESTS, true);
+        }
         sampleProducer->setContextOption(DATA_TO_SECURE,
                         (DataCallback)bind(&Signer::onPacket, &signer, _1));
         sampleProducer->setContextOption(SND_BUF_SIZE,100000);
