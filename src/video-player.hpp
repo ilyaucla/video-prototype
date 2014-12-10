@@ -60,8 +60,8 @@ namespace ndn {
         GstElement *sink;
         GstElement *queue;
 
-        pthread_mutex_t count_mutex;
-        pthread_cond_t count_cond;
+//        pthread_mutex_t count_mutex;
+//        pthread_cond_t count_cond;
       };
 
       struct VideoAudio
@@ -77,16 +77,16 @@ namespace ndn {
       {
         GstFlowReturn ret;
 
-        pthread_mutex_lock(&(app->count_mutex));
-        while((app -> dataQue).size() == 0 )
-        {
-           pthread_cond_wait(&(app->count_cond), &(app->count_mutex));
-        }
-        pthread_mutex_unlock(&(app->count_mutex));
-//        if( (app -> dataQue).size() < app->rate )
+//        pthread_mutex_lock(&(app->count_mutex));
+//        while((app -> dataQue).size() == 0 )
 //        {
-//          return TRUE; 
+//           pthread_cond_wait(&(app->count_cond), &(app->count_mutex));
 //        }
+//        pthread_mutex_unlock(&(app->count_mutex));
+        if( (app -> dataQue).size() == 0 )
+        {
+          return TRUE; 
+        }
         
 //        int total_len = 0;
 //        DataNode tmpNode;

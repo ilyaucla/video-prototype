@@ -31,22 +31,22 @@ namespace ndn {
   ConsumerCallback::processPayload(const uint8_t* buffer, size_t bufferSize)
   {
     std::cout << "video times " << times_video <<std::endl;
-    std::cout << "video bufferSize " << bufferSize <<std::endl;
+//    std::cout << "video bufferSize " << bufferSize <<std::endl;
 //    std::cout << "@buffer " << &buffer <<std::endl;
     player.h264_appsrc_data(buffer, bufferSize);
     times_video ++;
-    std::cout << "processPayload video over " << std::endl;
+//    std::cout << "processPayload video over " << std::endl;
   }
 
   void
   ConsumerCallback::processPayloadAudio(const uint8_t* buffer, size_t bufferSize)
   {
     std::cout << "audio times " << times_audio <<std::endl;
-    std::cout << "audio bufferSize " << bufferSize <<std::endl;
+//    std::cout << "audio bufferSize " << bufferSize <<std::endl;
 //    std::cout << "@buffer " << &buffer <<std::endl;
     player.h264_appsrc_data_audio(buffer, bufferSize);
     times_audio ++;
-    std::cout << "processPayload audio over " << std::endl;
+//    std::cout << "processPayload audio over " << std::endl;
   }
   
   void

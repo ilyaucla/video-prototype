@@ -9,6 +9,8 @@
 #ifndef CONSUMER_CALLBACK_HPP
 #define CONSUMER_CALLBACK_HPP
 #include <ndn-cxx/contexts/consumer-context.hpp>
+#include <fstream>
+#include <iostream>
 #include "video-player.hpp"
 
 // Enclosing code in ndn simplifies coding (can also use `using namespace ndn`)
@@ -51,6 +53,17 @@ namespace ndn {
       std::cout << "Retransmitted " << interest.getName() << std::endl;
     }
 
+    void
+    processFile(const uint8_t* buffer, size_t bufferSize)
+    {
+      std::ofstream filestr;
+    	// binary open
+      
+    	filestr.open ("/Users/lijing/next-ndnvideo/build/haha.mp3",  std::ios::out | std::ios::app | std::ios::binary);
+      filestr.write((char *)buffer, bufferSize);
+      filestr.close();
+ 
+    }
     VideoPlayer player;
   };
 

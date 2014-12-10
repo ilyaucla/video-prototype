@@ -9,13 +9,40 @@
 #ifndef VIDEO_GENERATOR_HPP
 #define VIDEO_GENERATOR_HPP
 
+#include <fstream>
+#include <iostream>
+#include <ctime>
+#include <pthread.h>
 #include <string>
 #include <vector>
 #include <gst/gst.h>
+#include "producer-callback.hpp"
 #include <ndn-cxx/contexts/producer-context.hpp>
+
 
 namespace ndn {
 // Additional nested namespace could be used to prevent/limit name contentions
+#define IDENTITY_NAME "/Lijing/Wang"  
+  class Signer
+{
+public:
+  Signer()
+  : m_identityName(IDENTITY_NAME)
+  {
+    m_keyChain.createIdentity(m_identityName);
+  };
+  
+  void
+  onPacket(Data& data)
+  {
+    m_keyChain.signByIdentity(data, m_identityName);
+  }
+  
+private:
+  KeyChain m_keyChain;
+  Name m_identityName;
+};
+
 
   class VideoGenerator
   {
@@ -31,9 +58,9 @@ namespace ndn {
       void 
       h264_generate_frames (std::string filename, Producer * producer);
       void 
-      h264_generate_whole (std::string filename, Producer * producerStreaminfo, Producer * producerFrame);
+      h264_generate_whole (std::string filename);
       void 
-      h264_generate_capture (Producer * producerStreaminfo, Producer * producerFrame);
+      h264_generate_capture (Producer * streaminfoProducer, Producer * frameProducer);
       void
       h264_file_info (std::string filename);
 
@@ -56,6 +83,107 @@ namespace ndn {
         GstSample *video;
         GstSample *audio;
       };
+
+      struct Producer_Need
+      {
+        GstElement *sink;
+//        Producer *streaminfoProducer;
+//        Producer *sampleProducer;
+        std::string name;
+        std::string filename;
+//        ProducerCallback cbProducer;
+      };
+
+/* 
+ * Lijing Wang
+ * Now use thread produce streaminfo & frames & samples seprately. 
+ *
+ */
+      static void
+      *produce_thread (void * threadData)
+      {
+        Producer_Need *pro;
+        pro = (Producer_Need *) threadData;
+        GstCaps *caps;
+        GstSample *sample;
+        std::string streaminfo;
+        GstBuffer *buffer;
+        GstMapInfo map;
+
+        Producer *streaminfoProducer;
+        Producer *sampleProducer;
+        ProducerCallback streaminfoCB;
+        ProducerCallback sampleCB;
+
+//        ProducerCallback cb_producer;
+        Name videoName_streaminfo(pro->filename + "/" + pro->name +  "/streaminfo");
+      /* streaminfoFrameProducer */
+        streaminfoProducer = new Producer(videoName_streaminfo);
+        streaminfoCB.setProducer(streaminfoProducer); // needed for some callback functionality
+        streaminfoProducer->setContextOption(INTEREST_ENTER_CNTX,
+                      (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &streaminfoCB, _1));
+        streaminfoProducer->setContextOption(DATA_LEAVE_CNTX,
+            (ConstDataCallback)bind(&ProducerCallback::processOutgoingData, &streaminfoCB, _1));
+        streaminfoProducer->setup();
+
+        Signer signer;
+        Name videoName_content(pro->filename + "/" + pro->name + "/content");
+        sampleProducer = new Producer(videoName_content);
+        sampleCB.setProducer(sampleProducer); // needed for some callback functionality
+        if(pro->name == "video")
+          sampleProducer->setContextOption(EMBEDDED_MANIFESTS, true);
+        sampleProducer->setContextOption(DATA_TO_SECURE,
+                        (DataCallback)bind(&Signer::onPacket, &signer, _1));
+        sampleProducer->setContextOption(SND_BUF_SIZE,100000);
+        sampleProducer->setContextOption(INTEREST_ENTER_CNTX,
+                        (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &sampleCB, _1));
+        sampleProducer->setContextOption(DATA_LEAVE_CNTX,
+            (ConstDataCallback)bind(&ProducerCallback::processOutgoingData, &sampleCB, _1));
+  //      (pro->sampleProducer)->setContextOption(INTEREST_ENTER_CNTX,
+  //                        (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &cb_producer, _1));
+  //      (pro->sampleProducer)->setContextOption(INTEREST_TO_PROCESS,
+  //                        (ConstInterestCallback)bind(&ProducerCallback::processInterest, &cb_producer, _1));
+        sampleProducer->setup();          
+ 
+        time_t time_start = std::time(0);
+        size_t samplenumber = 0;
+        
+        do {
+          g_signal_emit_by_name (pro->sink, "pull-sample", &sample);
+          if (sample == NULL){
+            g_print("Meet the EOS!\n");
+            break;
+            }
+          if ( samplenumber == 0)
+          {
+            caps = gst_sample_get_caps(sample);
+            streaminfo = gst_caps_to_string(caps);
+            Name streaminfoSuffix("");
+            streaminfoProducer->produce(streaminfoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size()+1);
+            std::cout << "produce " << pro->name << " streaminfo OK" << streaminfo << std::endl;
+            std::cout << "streaminfo size "<< streaminfo.size() + 1 << std::endl;
+          }
+          buffer = gst_sample_get_buffer (sample);
+          gst_buffer_map (buffer, &map, GST_MAP_READ);
+          Name sampleSuffix(std::to_string(samplenumber));
+          std::cout << pro->name << " sample number: "<< samplenumber <<std::endl;
+          std::cout << pro->name <<" sample Size: "<< map.size * sizeof(uint8_t) <<std::endl;
+
+          sampleProducer->produce(sampleSuffix, (uint8_t *)map.data, map.size * sizeof(uint8_t));
+          samplenumber ++;
+//          if ( samplenumber > 250)
+//            break;
+          if (sample)
+            gst_sample_unref (sample);
+          }while (sample != NULL);
+
+        time_t time_end = std::time(0);
+        double seconds = difftime(time_end, time_start);
+        std::cout << pro->name <<" "<< seconds << " seconds have passed" << std::endl;
+
+        sleep(50000);
+        pthread_exit(NULL);
+      }
 
       static void
       read_video_props (GstCaps *caps)

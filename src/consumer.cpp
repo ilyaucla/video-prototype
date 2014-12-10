@@ -28,7 +28,7 @@ public:
   bool
   onPacket(Data& data)
   {
-    return true;
+  //  return true;
     if (Validator::verifySignature(data, *m_publicKey))
     {
       std::cout << "Verified" << std::endl;
@@ -51,96 +51,86 @@ private:
   {
     try {
   
-  		std::string filename = "/Users/Loli/video/";
-  		if(argc >=2 )
-  			filename += argv[1];
-  		else
-  			filename += "duoyan.mp4";
+  		std::string filename = "/Users/Lijing/Movies/duoyan.mp4";
+//  		if(argc >=2 )
+//  			filename += argv[1];
+//  		else
+//  			filename += "duoyan.mp4";
       std::cout<<filename<<std::endl;
 
-      Name videoName(filename + "streaminfo");
       ConsumerCallback cb_consumer;
 
-      Consumer* streaminfoConsumer = new Consumer(videoName, RELIABLE, DATAGRAM );
-      streaminfoConsumer->setContextOption(MUST_BE_FRESH_S, true);
-      streaminfoConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
+      Name videoinfoName(filename + "/video/streaminfo");
+      Consumer* videoinfoConsumer = new Consumer(videoinfoName, RELIABLE, DATAGRAM );
+      videoinfoConsumer->setContextOption(MUST_BE_FRESH_S, true);
+      videoinfoConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
         (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
-      streaminfoConsumer->setContextOption(CONTENT_RETRIEVED, 
+      videoinfoConsumer->setContextOption(CONTENT_RETRIEVED, 
         (ContentCallback)bind(&ConsumerCallback::processStreaminfo, &cb_consumer, _1, _2));
 
-      streaminfoConsumer->consume(Name("video"));
+      videoinfoConsumer->consume(Name());
 
-      Consumer* audioinfoConsumer = new Consumer(videoName, RELIABLE, DATAGRAM );
+      Name audioinfoName(filename + "/audio/streaminfo");
+      Consumer* audioinfoConsumer = new Consumer(audioinfoName, RELIABLE, DATAGRAM );
       audioinfoConsumer->setContextOption(MUST_BE_FRESH_S, true);
       audioinfoConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
         (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
       audioinfoConsumer->setContextOption(CONTENT_RETRIEVED, 
         (ContentCallback)bind(&ConsumerCallback::processStreaminfoAudio, &cb_consumer, _1, _2));
 
-      audioinfoConsumer->consume(Name("audio"));
+      audioinfoConsumer->consume(Name());
 
       sleep(2); // because consume() is non-blocking
       std::cout << "consume whole start!" <<std::endl;
       
       Verificator* verificator = new Verificator();
-      Name videoName2(filename + "content");
+      Name videoName(filename + "/video/content");
 
-      Consumer* frameConsumer = new Consumer(videoName2, RELIABLE, SEQUENCE);
-//      frameConsumer->setContextOption(EMBEDDED_MANIFESTS, true);
-      frameConsumer->setContextOption(MUST_BE_FRESH_S, true);
-      frameConsumer->setContextOption(INTEREST_LIFETIME, 200);
-//      frameConsumer->setContextOption(MIN_WINDOW_SIZE, 1);
+      Consumer* videoConsumer = new Consumer(videoName, RELIABLE, SEQUENCE);
+      videoConsumer->setContextOption(EMBEDDED_MANIFESTS, true);
+      videoConsumer->setContextOption(MUST_BE_FRESH_S, true);
+      videoConsumer->setContextOption(INTEREST_LIFETIME, 200);
      // there is no need for other callback now
-      frameConsumer->setContextOption(DATA_TO_VERIFY,
+      videoConsumer->setContextOption(DATA_TO_VERIFY,
                       (DataVerificationCallback)bind(&Verificator::onPacket, verificator, _1));
+      videoConsumer->setContextOption(CONTENT_RETRIEVED, 
+                                (ContentCallback)bind(&ConsumerCallback::processPayload, &cb_consumer, _1, _2));
+  		videoConsumer->setContextOption(CONTENT_RETRIEVAL_SIZE, 1024*1024);
 
-//      frameConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
+//      videoConsumer->setContextOption(MIN_WINDOW_SIZE, 1);
+//      videoConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
 //                                (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
 //    
-//      frameConsumer->setContextOption(INTEREST_RETRANSMITTED, 
+//      videoConsumer->setContextOption(INTEREST_RETRANSMITTED, 
 //                                (ConstInterestCallback)bind(&ConsumerCallback::onRetx, &cb_consumer, _1));
-//      frameConsumer->setContextOption(DATA_ENTER_CNTX, 
+//      videoConsumer->setContextOption(DATA_ENTER_CNTX, 
 //                                (DataCallback)bind(&ConsumerCallback::processData, &cb_consumer, _1));
-   
-      frameConsumer->setContextOption(CONTENT_RETRIEVED, 
-                                (ContentCallback)bind(&ConsumerCallback::processPayload, &cb_consumer, _1, _2));
  
-  //	frameConsumer->setContextOption(SND_BUF_SIZE, 1024*1024*5);
-  //	frameConsumer->setContextOption(RCV_BUF_SIZE, 1024*1024*4);
+//	    videoConsumer->setContextOption(SND_BUF_SIZE, 1024*1024*5);
+//    	videoConsumer->setContextOption(RCV_BUF_SIZE, 1024*1024*4);
+//  		videoConsumer->setContextOption(CONTENT_CHUNK_SIZE, 1024*1024*10);
 
-//  		frameConsumer->setContextOption(CONTENT_CHUNK_SIZE, 1024*1024*10);
-  		frameConsumer->setContextOption(CONTENT_RETRIEVAL_SIZE, 1024*1024);
-
-      Consumer* sampleConsumer = new Consumer(videoName2, RELIABLE, SEQUENCE);
-//      sampleConsumer->setContextOption(EMBEDDED_MANIFESTS, true);
-      sampleConsumer->setContextOption(MUST_BE_FRESH_S, true);
-      sampleConsumer->setContextOption(INTEREST_LIFETIME, 200);
-     // there is no need for other callback now
- //     sampleConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
- //                               (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
-    
-      sampleConsumer->setContextOption(DATA_TO_VERIFY,
+      Name audioName(filename + "/audio/content");
+      Consumer* audioConsumer = new Consumer(audioName, RELIABLE, SEQUENCE);
+//      audioConsumer->setContextOption(EMBEDDED_MANIFESTS, true);
+      audioConsumer->setContextOption(MUST_BE_FRESH_S, true);
+      audioConsumer->setContextOption(INTEREST_LIFETIME, 200);
+      audioConsumer->setContextOption(DATA_TO_VERIFY,
                       (DataVerificationCallback)bind(&Verificator::onPacket, verificator, _1));
-
-//      sampleConsumer->setContextOption(INTEREST_RETRANSMITTED, 
-//                                (ConstInterestCallback)bind(&ConsumerCallback::onRetx, &cb_consumer, _1));
-//      sampleConsumer->setContextOption(DATA_ENTER_CNTX, 
-//                                (DataCallback)bind(&ConsumerCallback::processData, &cb_consumer, _1));
-   
-      sampleConsumer->setContextOption(CONTENT_RETRIEVED, 
+      audioConsumer->setContextOption(CONTENT_RETRIEVED, 
                                 (ContentCallback)bind(&ConsumerCallback::processPayloadAudio, &cb_consumer, _1, _2));
  
       int i = 0;
       time_t time_start_0 = std::time(0);
       std::cout << "Before consume " << time_start_0 << std::endl;
 
-      cb_consumer.player.consume_whole(frameConsumer, sampleConsumer);
+      cb_consumer.player.consume_whole(videoConsumer, audioConsumer);
 //      while (i < 25*60*5)
 //      {
 //        Name frameSuffix("video/" + std::to_string(i));
-//        frameConsumer->consume(frameSuffix);
+//        videoConsumer->consume(frameSuffix);
 //        Name sampleSuffix("audio/" + std::to_string(i));
-//        sampleConsumer->consume(sampleSuffix);
+//        audioConsumer->consume(sampleSuffix);
 //        i++;
 //      }
       time_t time_end_0  = std::time(0);

@@ -29,8 +29,8 @@ namespace ndn {
     VideoAudio *va =  &s_va;
     App *app = &(va->a_app);
     app->capstr = streaminfo; 
-    pthread_mutex_init(&(app->count_mutex), NULL);
-    pthread_cond_init (&(app->count_cond), NULL);
+//    pthread_mutex_init(&(app->count_mutex), NULL);
+//    pthread_cond_init (&(app->count_cond), NULL);
     std::cout << "Audio streaminfo " << streaminfo << std::endl;
     h264_appsrc_init();
   }
@@ -48,12 +48,12 @@ namespace ndn {
     dataNode.length = bufferSize;
     dataNode.data = (guint8 *) bufferTmp;
     (app->dataQue).push_back(dataNode);
-    pthread_mutex_lock(&(app->count_mutex));
-    if((app->dataQue).size() >= app->rate)
-       pthread_cond_signal(&(app->count_cond));
-    pthread_mutex_unlock(&(app->count_mutex));
+//    pthread_mutex_lock(&(app->count_mutex));
+//    if((app->dataQue).size() >= app->rate)
+//       pthread_cond_signal(&(app->count_cond));
+//    pthread_mutex_unlock(&(app->count_mutex));
 
-    std::cout << "CP Video Done! " << bufferSize <<std::endl;
+//    std::cout << "CP Video Done! " << bufferSize <<std::endl;
   }
 
   void
@@ -67,12 +67,12 @@ namespace ndn {
     dataNode.length = bufferSize;
     dataNode.data = (guint8 *) bufferTmp;
     (app->dataQue).push_back(dataNode);
-    pthread_mutex_lock(&(app->count_mutex));
-    if((app->dataQue).size() >= app->rate)
-       pthread_cond_signal(&(app->count_cond));
-    pthread_mutex_unlock(&(app->count_mutex));
+//    pthread_mutex_lock(&(app->count_mutex));
+//    if((app->dataQue).size() >= app->rate)
+//       pthread_cond_signal(&(app->count_cond));
+//    pthread_mutex_unlock(&(app->count_mutex));
 
-    std::cout << "CP Audio Done! " << bufferSize <<std::endl;
+//    std::cout << "CP Audio Done! " << bufferSize <<std::endl;
   }
 
 /*
@@ -90,7 +90,7 @@ namespace ndn {
   }
 /* Call Consume Here From the start*/
   void
-  VideoPlayer::consume_whole(Consumer *frameConsumer, Consumer *sampleConsumer)
+  VideoPlayer::consume_whole(Consumer *videoConsumer, Consumer *audioConsumer)
   {
     VideoAudio *va = &s_va;
     App *video = &(va->v_app);
@@ -100,13 +100,15 @@ namespace ndn {
     {
       for(int i=0; i< video->rate; i++)
       {
-        Name frameSuffix("video/" + std::to_string(seconds*video->rate + i));
-        frameConsumer->consume(frameSuffix);
+        Name videoSuffix(std::to_string(seconds*video->rate + i));
+        videoConsumer->consume(videoSuffix);
+//        usleep(100000);
       }
       for(int j=0; j< audio->rate; j++)
       {
-        Name sampleSuffix("audio/" + std::to_string(seconds*audio->rate + j));
-        sampleConsumer->consume(sampleSuffix);
+        Name audioSuffix(std::to_string(seconds*audio->rate + j));
+        audioConsumer->consume(audioSuffix);
+//        usleep(10000);
       }
     }
   }

@@ -6,9 +6,7 @@
  */
 
 #include "video-generator.hpp"
-#include <fstream>
-#include <iostream>
-#include <ctime>
+
 
 // Enclosing code in ndn simplifies coding (can also use `using namespace ndn`)
 namespace ndn {
@@ -141,7 +139,7 @@ namespace ndn {
   /* get the caps from h264parse */
 
   void 
-  VideoGenerator::h264_generate_capture (Producer *producerStreaminfo, Producer * producerFrame)
+  VideoGenerator::h264_generate_capture (Producer *streaminfoProducer, Producer * frameProducer)
   {
     GstElement *pipeline; 
     GstElement_Duo source, encoder, parser, sink;
@@ -191,7 +189,7 @@ namespace ndn {
         streaminfo = gst_caps_to_string(caps);
         Name streaminfoVideoSuffix("video");
 //        std::cout << streaminfo << std::endl;
-        producerStreaminfo->produce(streaminfoVideoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size()+1);
+        streaminfoProducer->produce(streaminfoVideoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size()+1);
         std::cout << "produce video streaminfo OK! " << streaminfo << std::endl;
         std::cout << "streaminfo size "<< streaminfo.size() + 1 << std::endl;
         sleep(2);
@@ -202,7 +200,7 @@ namespace ndn {
       std::cout << "Frame number: "<< framenumber <<std::endl;
       std::cout << "Frame Size: "<< map.size * sizeof(uint8_t) <<std::endl;
 
-      producerFrame->produce(frameSuffix, (uint8_t *)map.data, map.size * sizeof(uint8_t));
+      frameProducer->produce(frameSuffix, (uint8_t *)map.data, map.size * sizeof(uint8_t));
       framenumber ++;
 //      if ( framenumber > 2500)
 //        break;
@@ -229,7 +227,7 @@ namespace ndn {
 //        streaminfo = gst_caps_to_string(caps);
 //        Name streaminfoVideoSuffix("audio");
 ////        std::cout << streaminfo << std::endl;
-//        producerStreaminfo->produce(streaminfoVideoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size()+1);
+//        streaminfoProducer->produce(streaminfoVideoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size()+1);
 //        std::cout << "produce audio streaminfo OK! " << streaminfo << std::endl;
 //        std::cout << "streaminfo size "<< streaminfo.size() + 1 << std::endl;
 //        sleep(2);
@@ -240,7 +238,7 @@ namespace ndn {
 //      std::cout << "Sample number: "<< samplenumber <<std::endl;
 //      std::cout << "Sample Size: "<< map.size * sizeof(uint8_t) <<std::endl;
 //
-//      producerFrame->produce(sampleSuffix, (uint8_t *)map.data, map.size * sizeof(uint8_t));
+//      frameProducer->produce(sampleSuffix, (uint8_t *)map.data, map.size * sizeof(uint8_t));
 //      samplenumber ++;
 ////      if ( samplenumber > 2500)
 ////        break;
@@ -258,7 +256,7 @@ namespace ndn {
   }
 
   void 
-  VideoGenerator::h264_generate_whole (std::string filename, Producer *producerStreaminfo, Producer * producerFrame)
+  VideoGenerator::h264_generate_whole (std::string filename)
   {
     GstElement *pipeline, *source, *demuxer; 
     GstElement_Duo queue, parser, sink;
@@ -267,7 +265,7 @@ namespace ndn {
     std::string streaminfo;
     GstBuffer *buffer;
     GstMapInfo map;
-
+  
     /* Initialisation */ 
     gst_init (NULL, NULL); 
     /* Create gstreamer elements */ 
@@ -302,93 +300,66 @@ namespace ndn {
 
     gst_element_set_state (pipeline, GST_STATE_PLAYING); 
     
-    time_t time_start = std::time(0);
-    size_t framenumber = 0;
-    
-    do {
-      g_signal_emit_by_name (sink.video, "pull-sample", &sample);
-      if (sample == NULL){
-        g_print("Meet the EOS!\n");
-        break;
-        }
-      if ( framenumber == 0)
-      {
-        caps = gst_sample_get_caps(sample);
-        streaminfo = gst_caps_to_string(caps);
-        Name streaminfoVideoSuffix("video");
-//        std::cout << streaminfo << std::endl;
-        producerStreaminfo->produce(streaminfoVideoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size()+1);
-        std::cout << "produce video streaminfo OK! " << streaminfo << std::endl;
-        std::cout << "streaminfo size "<< streaminfo.size() + 1 << std::endl;
-        sleep(2);
-      }
-      buffer = gst_sample_get_buffer (sample);
-      gst_buffer_map (buffer, &map, GST_MAP_READ);
-      Name frameSuffix("video/" + std::to_string(framenumber));
-      std::cout << "Frame number: "<< framenumber <<std::endl;
-      std::cout << "Frame Size: "<< map.size * sizeof(uint8_t) <<std::endl;
 
-      producerFrame->produce(frameSuffix, (uint8_t *)map.data, map.size * sizeof(uint8_t));
-      framenumber ++;
-//      if ( framenumber > 250)
+    std::cout << "video thread start!" << std::endl;
+    Producer_Need pro_video;
+    pthread_t thread_video; 
+    int rc_video;
+    pro_video.filename = filename;
+    pro_video.sink = sink.video;
+    pro_video.name = "video";
+    rc_video = pthread_create(&thread_video, NULL, produce_thread , (void *)&pro_video);
+ 
+//    sleep(2);
+
+    std::cout << "audio thread start!" << std::endl;
+    Producer_Need pro_audio;
+    pthread_t thread_audio; 
+    int rc_audio;
+    pro_audio.filename = filename;
+    pro_audio.sink = sink.audio;
+    pro_audio.name = "audio";
+    rc_audio = pthread_create(&thread_audio, NULL, produce_thread , (void *)&pro_audio);
+
+//    time_t time_start = std::time(0);
+//    size_t samplenumber = 0;
+//    
+//    do {
+//      g_signal_emit_by_name (sink.audio, "pull-sample", &sample);
+//      if (sample == NULL){
+//        g_print("Meet the EOS!\n");
 //        break;
-      if (sample)
-        gst_sample_unref (sample);
-      }while (sample != NULL);
-
-    time_t time_end = std::time(0);
-    double seconds = difftime(time_end, time_start);
-    std::cout << seconds << " seconds have passed" << std::endl;
-
-    time_start = std::time(0);
-    size_t samplenumber = 0;
-    
-    do {
-      g_signal_emit_by_name (sink.audio, "pull-sample", &sample);
-      if (sample == NULL){
-        g_print("Meet the EOS!\n");
-        break;
-        }
-      if ( samplenumber == 0)
-      {
-        caps = gst_sample_get_caps(sample);
-        streaminfo = gst_caps_to_string(caps);
-        Name streaminfoVideoSuffix("audio");
-//        std::cout << streaminfo << std::endl;
-        producerStreaminfo->produce(streaminfoVideoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size()+1);
-        std::cout << "produce audio streaminfo OK! " << streaminfo << std::endl;
-        std::cout << "streaminfo size "<< streaminfo.size() + 1 << std::endl;
-        sleep(2);
-      }
-      buffer = gst_sample_get_buffer (sample);
-      gst_buffer_map (buffer, &map, GST_MAP_READ);
-      Name sampleSuffix("audio/" + std::to_string(samplenumber));
-      std::cout << "Sample number: "<< samplenumber <<std::endl;
-      std::cout << "Sample Size: "<< map.size * sizeof(uint8_t) <<std::endl;
-
-      producerFrame->produce(sampleSuffix, (uint8_t *)map.data, map.size * sizeof(uint8_t));
-      samplenumber ++;
- //     if ( samplenumber > 220)
- //       break;
-      if (sample)
-        gst_sample_unref (sample);
-      }while (sample != NULL);
-
-    time_end = std::time(0);
-    seconds = difftime(time_end, time_start);
-    std::cout << seconds << " seconds have passed" << std::endl;
-
-//    g_signal_emit_by_name (sink.video, "pull-sample", &sample.video);
-//    caps.video = gst_sample_get_caps(sample.video);
-//    streaminfo[0] = gst_caps_to_string(caps.video);
-//    std::cout << streaminfo[0] << std::endl;
+//        }
+//      if ( samplenumber == 0)
+//      {
+//        caps = gst_sample_get_caps(sample);
+//        streaminfo = gst_caps_to_string(caps);
+//        Name streaminfoAudioSuffix("audio");
+////        std::cout << streaminfo << std::endl;
+//        audioinfoProducer->produce(streaminfoAudioSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size()+1);
+//        std::cout << "produce audio streaminfo OK! " << streaminfo << std::endl;
+//        std::cout << "streaminfo size "<< streaminfo.size() + 1 << std::endl;
+//      }
+//      buffer = gst_sample_get_buffer (sample);
+//      gst_buffer_map (buffer, &map, GST_MAP_READ);
+//      Name sampleSuffix("audio/" + std::to_string(samplenumber));
+//      std::cout << "Sample number: "<< samplenumber <<std::endl;
+//      std::cout << "Sample Size: "<< map.size * sizeof(uint8_t) <<std::endl;
 //
-//    g_signal_emit_by_name (sink.audio, "pull-sample", &sample.audio);
-//    caps.audio = gst_sample_get_caps(sample.audio);
-//    streaminfo[1] = gst_caps_to_string(caps.audio);
-//    std::cout << streaminfo[1] << std::endl;
+//      sampleProducer->produce(sampleSuffix, (uint8_t *)map.data, map.size * sizeof(uint8_t));
+//      samplenumber ++;
+// //     if ( samplenumber > 220)
+// //       break;
+//      if (sample)
+//        gst_sample_unref (sample);
+//      }while (sample != NULL);
+//
+//    time_t time_end = std::time(0);
+//    double seconds = difftime(time_end, time_start);
+//    std::cout << seconds << " seconds have passed" << std::endl;
 
-    gst_element_set_state (pipeline, GST_STATE_NULL); 
+    sleep(30000);
+//    gst_element_set_state (pipeline, GST_STATE_NULL); 
     g_print ("Deleting pipeline\n"); 
     return;
   }
