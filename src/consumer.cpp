@@ -80,7 +80,7 @@ private:
 
       audioinfoConsumer->consume(Name());
 
-      sleep(2); // because consume() is non-blocking
+//      sleep(2); // because consume() is non-blocking
       std::cout << "consume whole start!" <<std::endl;
       
       Verificator* verificator = new Verificator();

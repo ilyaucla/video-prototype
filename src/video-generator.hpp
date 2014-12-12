@@ -115,6 +115,9 @@ private:
         ProducerCallback streaminfoCB;
         ProducerCallback sampleCB;
 
+        time_t time_start = std::time(0);
+        size_t samplenumber = 0;
+
 //        ProducerCallback cb_producer;
         Name videoName_streaminfo(pro->filename + "/" + pro->name +  "/streaminfo");
       /* streaminfoFrameProducer */
@@ -130,6 +133,7 @@ private:
         Name videoName_content(pro->filename + "/" + pro->name + "/content");
         sampleProducer = new Producer(videoName_content);
         sampleCB.setProducer(sampleProducer); // needed for some callback functionality
+        sampleCB.setSampleNumber(&samplenumber);
         if(pro->name == "video")
         {
           std::cout << "I'm video~ "<<std::endl;
@@ -142,14 +146,10 @@ private:
                         (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &sampleCB, _1));
         sampleProducer->setContextOption(DATA_LEAVE_CNTX,
             (ConstDataCallback)bind(&ProducerCallback::processOutgoingData, &sampleCB, _1));
-  //      (pro->sampleProducer)->setContextOption(INTEREST_ENTER_CNTX,
-  //                        (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &cb_producer, _1));
-  //      (pro->sampleProducer)->setContextOption(INTEREST_TO_PROCESS,
-  //                        (ConstInterestCallback)bind(&ProducerCallback::processInterest, &cb_producer, _1));
+        sampleProducer->setContextOption(INTEREST_TO_PROCESS,
+                          (ConstInterestCallback)bind(&ProducerCallback::processInterest, &sampleCB, _1));
         sampleProducer->setup();          
  
-        time_t time_start = std::time(0);
-        size_t samplenumber = 0;
         
         do {
           g_signal_emit_by_name (pro->sink, "pull-sample", &sample);
@@ -169,8 +169,8 @@ private:
           buffer = gst_sample_get_buffer (sample);
           gst_buffer_map (buffer, &map, GST_MAP_READ);
           Name sampleSuffix(std::to_string(samplenumber));
-          std::cout << pro->name << " sample number: "<< samplenumber <<std::endl;
-          std::cout << pro->name <<" sample Size: "<< map.size * sizeof(uint8_t) <<std::endl;
+          std::cout << pro->name << " sample number: "<< std::dec << samplenumber <<std::endl;
+          std::cout << pro->name <<" sample Size: "<< std::dec << map.size * sizeof(uint8_t) <<std::endl;
 
           sampleProducer->produce(sampleSuffix, (uint8_t *)map.data, map.size * sizeof(uint8_t));
           samplenumber ++;

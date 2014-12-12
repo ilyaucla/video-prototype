@@ -7,6 +7,7 @@
 #ifndef PRODUCER_CALLBACK_HPP
 #define PRODUCER_CALLBACK_HPP
 #include <ndn-cxx/contexts/producer-context.hpp>
+#include <ndn-cxx/contexts/application-nack.hpp>
 namespace ndn {
 // Additional nested namespace could be used to prevent/limit name contentions
   class ProducerCallback
@@ -17,6 +18,9 @@ namespace ndn {
     void
     setProducer(Producer* p);
     
+    void
+    setSampleNumber(size_t* n);
+
     void
     processConstData(const Data& data);
     
@@ -40,6 +44,7 @@ namespace ndn {
   
   private:
     Producer* m_producer;
+    size_t* m_curnum;
   };
   
 } // namespace ndn
