@@ -60,7 +60,7 @@ private:
       void 
       h264_generate_whole (std::string filename);
       void 
-      h264_generate_capture (Producer * streaminfoProducer, Producer * frameProducer);
+      h264_generate_capture (std::string filename);
       void
       h264_file_info (std::string filename);
 
@@ -119,6 +119,7 @@ private:
         size_t samplenumber = 0;
 
 //        ProducerCallback cb_producer;
+        std::cout << pro->filename + "/" + pro->name +  "/streaminfo" << std::endl;
         Name videoName_streaminfo(pro->filename + "/" + pro->name +  "/streaminfo");
       /* streaminfoFrameProducer */
         streaminfoProducer = new Producer(videoName_streaminfo);
@@ -137,10 +138,10 @@ private:
         if(pro->name == "video")
         {
           std::cout << "I'm video~ "<<std::endl;
-          sampleProducer->setContextOption(EMBEDDED_MANIFESTS, true);
+//          sampleProducer->setContextOption(EMBEDDED_MANIFESTS, true);
         }
-        sampleProducer->setContextOption(DATA_TO_SECURE,
-                        (DataCallback)bind(&Signer::onPacket, &signer, _1));
+//        sampleProducer->setContextOption(DATA_TO_SECURE,
+//                        (DataCallback)bind(&Signer::onPacket, &signer, _1));
         sampleProducer->setContextOption(SND_BUF_SIZE,100000);
         sampleProducer->setContextOption(INTEREST_ENTER_CNTX,
                         (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &sampleCB, _1));
@@ -149,7 +150,6 @@ private:
         sampleProducer->setContextOption(INTEREST_TO_PROCESS,
                           (ConstInterestCallback)bind(&ProducerCallback::processInterest, &sampleCB, _1));
         sampleProducer->setup();          
- 
         
         do {
           g_signal_emit_by_name (pro->sink, "pull-sample", &sample);
@@ -172,6 +172,7 @@ private:
           std::cout << pro->name << " sample number: "<< std::dec << samplenumber <<std::endl;
           std::cout << pro->name <<" sample Size: "<< std::dec << map.size * sizeof(uint8_t) <<std::endl;
 
+//          if( samplenumber % 100 != 0)
           sampleProducer->produce(sampleSuffix, (uint8_t *)map.data, map.size * sizeof(uint8_t));
           samplenumber ++;
 //          if ( samplenumber > 250)

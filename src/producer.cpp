@@ -45,18 +45,16 @@ namespace ndn {
 //                        (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &cb_producer, _1));
 //      sampleProducer->setup();
 
-      generator.h264_generate_whole(filename);
+//      generator.h264_generate_whole(filename);
+      filename = "/Capture";
+      generator.h264_generate_capture(filename);
 
       std::cout << "COOL~" << std::endl;
-//      generator.h264_generate_capture(streaminfoSampleProducer, frameProducer);
 
 //      generator.h264_generate_frames(filename, frameProducer);
 //      generator.playbin_generate_frames(filename, frameProducer);
 //      There is no need for callback now 
 //      ProducerCallback cb_producer;
-//      
-//      //setting callbacks
-      //listening
 //      
 //      buffer = generator.generateVideoOnce(filename, size);
 //
