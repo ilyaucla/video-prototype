@@ -60,8 +60,8 @@ namespace ndn {
         GstElement *sink;
         GstElement *queue;
 
-//        pthread_mutex_t count_mutex;
-//        pthread_cond_t count_cond;
+        pthread_mutex_t count_mutex;
+        pthread_cond_t count_cond;
       };
 
       struct VideoAudio
@@ -73,47 +73,28 @@ namespace ndn {
       VideoAudio s_va;
 
       static gboolean
-      read_data (App * app)
+      feed_data  (GstElement * pipeline, guint size, App * app)
       {
         GstFlowReturn ret;
+        std::cout << "feed_data " << app->rate << std::endl;
 
-//        pthread_mutex_lock(&(app->count_mutex));
-//        while((app -> dataQue).size() == 0 )
-//        {
-//           pthread_cond_wait(&(app->count_cond), &(app->count_mutex));
-//        }
-//        pthread_mutex_unlock(&(app->count_mutex));
-        if( (app -> dataQue).size() == 0 )
+        pthread_mutex_lock(&(app->count_mutex));
+        while((app -> dataQue).size() == 0 )
         {
-          return TRUE; 
+           pthread_cond_wait(&(app->count_cond), &(app->count_mutex));
+//           break;
         }
+        pthread_mutex_unlock(&(app->count_mutex));
+//        if( (app -> dataQue).size() == 0  )
+//        {
+//          usleep(1000000);
+//          if(app->rate == 44)
+//            std::cout<< "audioQueue EMPTY!!" << std::endl;
+//          return TRUE; 
+//        }
         
-//        int total_len = 0;
-//        DataNode tmpNode;
-//
-//        for(int i = 0; i < app->rate; i++)
-//        {
-//          tmpNode = (app -> dataQue).at(i);
-//          total_len += tmpNode.length; 
-//        }
-//
-//        uint8_t* bufferTmp = new uint8_t[total_len];
-//        gsize next = 0;
-//
-//        for(int i = 0; i < app->rate; i++)
-//        {
-//          tmpNode = (app -> dataQue).front();
-//          memcpy (bufferTmp + next, tmpNode.data, tmpNode.length);
-//          next = tmpNode.length;
-//          (app -> dataQue).pop_front();
-//        }
-//
-//        buffer = gst_buffer_new ();
-//        buffer = gst_buffer_new_wrapped (bufferTmp , total_len);
-
-//        for(int i = 0; i < app->rate; i++)
-//        {
-        std::cout << "Read Data !" << std::endl;
+        std::cout << "ReadratePULL !" << app->rate << std::endl;
+        std::cout << "queueSize !" << (app->dataQue).size() << std::endl;
         DataNode tmpNode = (app -> dataQue).front();
         GstBuffer *buffer;
         buffer = gst_buffer_new ();
@@ -125,6 +106,44 @@ namespace ndn {
 //        std::cout << "Read Data Here appsrc work well! total data length " << total_len <<std::endl;
         if (ret != GST_FLOW_OK) {
           /* some error, stop sending data */
+          std::cout << "FALSE!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+          return FALSE;
+        }
+        return TRUE;
+      }
+
+  /* PULL MODE USED */
+      static gboolean
+      read_data (App * app)
+      {
+        GstFlowReturn ret;
+        pthread_mutex_lock(&(app->count_mutex));
+        while((app -> dataQue).size() == 0 )
+        {
+           pthread_cond_wait(&(app->count_cond), &(app->count_mutex));
+        }
+        pthread_mutex_unlock(&(app->count_mutex));
+
+//        if( (app -> dataQue).size() == 0  )
+//        {
+////          usleep(1000);
+////          if(app->rate == 44)
+////            std::cout<< "audioQueue EMPTY!!" << std::endl;
+//          return TRUE; 
+//        }
+        
+        std::cout << "Readrate !" << app->rate << std::endl;
+        DataNode tmpNode = (app -> dataQue).front();
+        GstBuffer *buffer;
+        buffer = gst_buffer_new ();
+        buffer = gst_buffer_new_wrapped (tmpNode.data, tmpNode.length);
+        g_signal_emit_by_name (app->appsrc, "push-buffer", buffer, &ret);
+        gst_buffer_unref (buffer);
+        (app -> dataQue).pop_front();
+
+        if (ret != GST_FLOW_OK) {
+          /* some error, stop sending data */
+          std::cout << "FALSE!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
           return FALSE;
         }
         return TRUE;
@@ -156,11 +175,11 @@ namespace ndn {
        * appsrc that we must handle. We set up some signals to start and stop pushing
        * data into appsrc */
       static void
-      found_source (GObject * object, GObject * orig, GParamSpec * pspec, App * app)
+      found_source_push (GObject * object, GObject * orig, GParamSpec * pspec, App * app)
       {
         /* get a handle to the appsrc */
         g_object_get (orig, pspec->name, &app->appsrc, NULL);
-        std::cout << app->capstr << std::endl;
+        std::cout << "found_source" << app->capstr << std::endl;
         g_object_set (G_OBJECT (app->appsrc), "caps", gst_caps_from_string((app->capstr).c_str()), NULL);
 //        g_object_set (app->appsrc, "size", (gint64) app->length, NULL);
         /* configure the appsrc, we will push data into the appsrc from the
@@ -170,7 +189,30 @@ namespace ndn {
       }
 
       static void
-      *capture_thread (void * threadData)
+      found_source (GObject * object, GObject * orig, GParamSpec * pspec, App * app)
+      {
+        /* get a handle to the appsrc */
+        g_object_get (orig, pspec->name, &app->appsrc, NULL);
+        std::cout << "found_source" << app->capstr << std::endl;
+        g_object_set (G_OBJECT (app->appsrc), "caps", gst_caps_from_string((app->capstr).c_str()), NULL);
+      
+        /* we can set the length in appsrc. This allows some elements to estimate the
+         * total duration of the stream. It's a good idea to set the property when you
+         * can but it's not required. */
+      //  g_object_set (app->appsrc, "size", (gint64) app->length, NULL);
+      
+        /* configure the appsrc, we will push a buffer to appsrc when it needs more
+         * data */
+        g_signal_connect (app->appsrc, "need-data", G_CALLBACK (feed_data), app);
+      }
+
+      /* 
+       * This works well for playing back from Capture with audio 
+       * Lijig Wang
+       * 2014/12/15 
+       */
+      static void
+      *h264_capture_thread (void * threadData)
       {
         VideoAudio * va;
         va = (VideoAudio *) threadData;
@@ -203,13 +245,16 @@ namespace ndn {
 //        gst_structure_remove_fields (str,"level", "profile", "height", "width", "framerate", "pixel-aspect-ratio", "parsed", NULL);
         video->rate = ceil(num/double(denom)); //FIX ME
         std::cout << "video->rate " << video->rate << std::endl; 
-
+       
+        g_object_set (G_OBJECT (video->queue), "max-size-time", 500000000, NULL); 
         g_object_set (G_OBJECT (video->appsrc), "caps", caps, NULL);
         gst_bin_add_many (GST_BIN (pipeline), video->appsrc, video->queue, video->decoder, video->sink, NULL);
         gst_element_link_many (video->appsrc, video->queue, video->decoder, video->sink, NULL);
         /* setup appsrc */
-        g_signal_connect (video->appsrc, "need-data", G_CALLBACK (start_feed), video);
-        g_signal_connect (video->appsrc, "enough-data", G_CALLBACK (stop_feed), video);
+//        g_object_set (G_OBJECT (video->appsrc), "do-timestamp", TRUE, NULL);
+        g_signal_connect (video->appsrc, "need-data", G_CALLBACK (feed_data), video);
+//        g_signal_connect (video->appsrc, "need-data", G_CALLBACK (start_feed), video);
+//        g_signal_connect (video->appsrc, "enough-data", G_CALLBACK (stop_feed), video);
 /**********   Video Part Over**************/
 
 /******* Audio Part *********************/
@@ -226,12 +271,15 @@ namespace ndn {
         audio->rate = samplerate/1000; //FIX ME
         std::cout << "audio->rate " << audio->rate << std::endl; 
       
+        g_object_set (G_OBJECT (audio->queue), "max-size-time", 500000000, NULL); 
         g_object_set (G_OBJECT (audio->appsrc), "caps", caps_audio, NULL);
         gst_bin_add_many (GST_BIN (pipeline), audio->appsrc, audio->queue, audio->decoder, audio->sink, NULL);
         gst_element_link_many (audio->appsrc, audio->queue, audio->decoder, audio->sink, NULL);
         /* setup appsrc */
-        g_signal_connect (audio->appsrc, "need-data", G_CALLBACK (start_feed), audio);
-        g_signal_connect (audio->appsrc, "enough-data", G_CALLBACK (stop_feed), audio);
+//        g_object_set (G_OBJECT (audio->appsrc), "do-timestamp", TRUE, NULL);
+        g_signal_connect (audio->appsrc, "need-data", G_CALLBACK (feed_data), audio);
+//        g_signal_connect (audio->appsrc, "need-data", G_CALLBACK (start_feed), audio);
+//        g_signal_connect (audio->appsrc, "enough-data", G_CALLBACK (stop_feed), audio);
 /*********Audio Part Over **************/        
 
         /* Set bus */
@@ -239,6 +287,7 @@ namespace ndn {
         gst_bus_add_watch (bus, (GstBusFunc)bus_call, pipeline);
         gst_object_unref (bus);
         /* play */
+        sleep(1);
         gst_element_set_state (pipeline, GST_STATE_PLAYING);
         g_main_loop_run (loop);
         
@@ -319,6 +368,110 @@ namespace ndn {
         g_signal_connect (audio->appsrc, "need-data", G_CALLBACK (start_feed), audio);
         g_signal_connect (audio->appsrc, "enough-data", G_CALLBACK (stop_feed), audio);
 /*********Audio Part Over **************/        
+
+        /* Set bus */
+        bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
+        gst_bus_add_watch (bus, (GstBusFunc)bus_call, pipeline);
+        gst_object_unref (bus);
+        /* play */
+        gst_element_set_state (pipeline, GST_STATE_PLAYING);
+        g_main_loop_run (loop);
+        
+        /* clean up */
+        gst_element_set_state (pipeline, GST_STATE_NULL);
+        gst_object_unref (GST_OBJECT (pipeline));
+        g_main_loop_unref (loop);
+
+        pthread_exit(NULL);
+      }
+      
+      static void
+      *h264_audio_thread (void * threadData)
+      {
+        GstBus *bus;
+        GMainLoop *loop;
+        GstElement *pipeline;
+        App *audio = (App *) threadData;
+        
+        /* init GStreamer */
+        gst_init (NULL, NULL);
+        loop = g_main_loop_new (NULL, FALSE);
+        /* setup pipeline */
+        pipeline = gst_pipeline_new ("pipeline");
+
+/******* Audio Part *********************/
+        audio->appsrc = gst_element_factory_make ("appsrc", "audio_source");
+        audio->queue = gst_element_factory_make("queue", "audio_queue");
+        audio->decoder = gst_element_factory_make ("faad", "audio_decoder"); 
+        audio->sink = gst_element_factory_make ("autoaudiosink", "audio_sink");
+        const gchar * streaminfo_audio = audio->capstr.c_str();
+        /* setup streaminfo */
+        GstCaps *caps_audio =  gst_caps_from_string(streaminfo_audio); 
+        GstStructure *str_audio = gst_caps_get_structure (caps_audio, 0);
+        int samplerate;
+        gst_structure_get_int (str_audio, "rate", &samplerate);
+        audio->rate = samplerate/1000; //FIX ME
+        std::cout << "audio->rate " << audio->rate << std::endl; 
+      
+        g_object_set (G_OBJECT (audio->appsrc), "caps", caps_audio, NULL);
+        gst_bin_add_many (GST_BIN (pipeline), audio->appsrc, audio->queue, audio->decoder, audio->sink, NULL);
+        gst_element_link_many (audio->appsrc, audio->queue, audio->decoder, audio->sink, NULL);
+        /* setup appsrc */
+        g_signal_connect (audio->appsrc, "need-data", G_CALLBACK (start_feed), audio);
+        g_signal_connect (audio->appsrc, "enough-data", G_CALLBACK (stop_feed), audio);
+/*********Audio Part Over **************/        
+
+        /* Set bus */
+        bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
+        gst_bus_add_watch (bus, (GstBusFunc)bus_call, pipeline);
+        gst_object_unref (bus);
+        /* play */
+        gst_element_set_state (pipeline, GST_STATE_PLAYING);
+        g_main_loop_run (loop);
+        
+        /* clean up */
+        gst_element_set_state (pipeline, GST_STATE_NULL);
+        gst_object_unref (GST_OBJECT (pipeline));
+        g_main_loop_unref (loop);
+
+        pthread_exit(NULL);
+      }
+
+/* Only playback video */
+      static void
+      *h264_video_thread (void * threadData)
+      {
+        GstBus *bus;
+        GMainLoop *loop;
+        GstElement *pipeline;
+        App *video = (App *) threadData;
+        
+        /* init GStreamer */
+        gst_init (NULL, NULL);
+        loop = g_main_loop_new (NULL, FALSE);
+        /* setup pipeline */
+        pipeline = gst_pipeline_new ("pipeline");
+/**********   Video Part **************/
+        video->appsrc = gst_element_factory_make ("appsrc", "video_source");
+        video->queue = gst_element_factory_make("queue", "video_queue");
+        video->decoder = gst_element_factory_make ("avdec_h264", "video_decoder");
+        video->sink = gst_element_factory_make ("autovideosink", "video_sink");
+        const gchar * streaminfo = video->capstr.c_str();
+        /* setup streaminfo */
+        GstCaps *caps = gst_caps_from_string(streaminfo); 
+        GstStructure *str = gst_caps_get_structure (caps, 0);
+        int num, denom;
+        gst_structure_get_fraction (str, "framerate", &num, &denom);
+        video->rate = ceil(num/double(denom)); //FIX ME
+        std::cout << "video->rate " << video->rate << std::endl; 
+
+        g_object_set (G_OBJECT (video->appsrc), "caps", caps, NULL);
+        gst_bin_add_many (GST_BIN (pipeline), video->appsrc, video->queue, video->decoder, video->sink, NULL);
+        gst_element_link_many (video->appsrc, video->queue, video->decoder, video->sink, NULL);
+        /* setup appsrc */
+        g_signal_connect (video->appsrc, "need-data", G_CALLBACK (start_feed), video);
+        g_signal_connect (video->appsrc, "enough-data", G_CALLBACK (stop_feed), video);
+/**********   Video Part Over**************/
 
         /* Set bus */
         bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));

@@ -138,11 +138,14 @@ private:
         if(pro->name == "video")
         {
           std::cout << "I'm video~ "<<std::endl;
+          sampleProducer->setContextOption(SND_BUF_SIZE,100000);
 //          sampleProducer->setContextOption(EMBEDDED_MANIFESTS, true);
+        }else
+        {
+          sampleProducer->setContextOption(SND_BUF_SIZE,100000);
         }
 //        sampleProducer->setContextOption(DATA_TO_SECURE,
 //                        (DataCallback)bind(&Signer::onPacket, &signer, _1));
-        sampleProducer->setContextOption(SND_BUF_SIZE,100000);
         sampleProducer->setContextOption(INTEREST_ENTER_CNTX,
                         (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &sampleCB, _1));
         sampleProducer->setContextOption(DATA_LEAVE_CNTX,

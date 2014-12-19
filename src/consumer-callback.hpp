@@ -48,7 +48,7 @@ namespace ndn {
     processLeavingInterest(Interest& interest);
     
     void
-    onRetx(const Interest& interest)
+    onRetx(Interest& interest)
     {
       std::cout << "Retransmitted " << interest.getName() << std::endl;
     }

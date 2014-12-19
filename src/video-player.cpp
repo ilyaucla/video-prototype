@@ -23,7 +23,13 @@ namespace ndn {
     VideoAudio *va =  &s_va;
     App *app = &(va->v_app);
     app->capstr = streaminfo; 
-    std::cout << "Video streaminfo " << streaminfo << std::endl;
+    pthread_mutex_init(&(app->count_mutex), NULL);
+    pthread_cond_init (&(app->count_cond), NULL);
+//    std::cout << "Video streaminfo " << streaminfo << std::endl;
+//    pthread_t thread; 
+//    int rc;
+//    rc = pthread_create(&thread, NULL, h264_video_thread ,(void *)app);
+//    std::cout << "h264_video_init OK! " << std::endl;
   }
 
   void
@@ -32,9 +38,13 @@ namespace ndn {
     VideoAudio *va =  &s_va;
     App *app = &(va->a_app);
     app->capstr = streaminfo; 
-//    pthread_mutex_init(&(app->count_mutex), NULL);
-//    pthread_cond_init (&(app->count_cond), NULL);
-    std::cout << "Audio streaminfo " << streaminfo << std::endl;
+    pthread_mutex_init(&(app->count_mutex), NULL);
+    pthread_cond_init (&(app->count_cond), NULL);
+//    std::cout << "Audio streaminfo " << streaminfo << std::endl;
+//    pthread_t thread; 
+//    int rc;
+//    rc = pthread_create(&thread, NULL, h264_audio_thread ,(void *)app);
+//    std::cout << "h264_audio_thread OK! " << std::endl;
     h264_appsrc_init();
   }
 
@@ -51,12 +61,12 @@ namespace ndn {
     dataNode.length = bufferSize;
     dataNode.data = (guint8 *) bufferTmp;
     (app->dataQue).push_back(dataNode);
-    std::cout << "video times h264_appsrc_data " << t_video <<std::endl;
+    std::cout << "videoQueueSize " << (app->dataQue).size() <<std::endl;
     t_video ++;
-//    pthread_mutex_lock(&(app->count_mutex));
-//    if((app->dataQue).size() >= app->rate)
-//       pthread_cond_signal(&(app->count_cond));
-//    pthread_mutex_unlock(&(app->count_mutex));
+    pthread_mutex_lock(&(app->count_mutex));
+    if((app->dataQue).size() > 0)
+       pthread_cond_signal(&(app->count_cond));
+    pthread_mutex_unlock(&(app->count_mutex));
 
 //    std::cout << "CP Video Done! " << bufferSize <<std::endl;
   }
@@ -72,12 +82,12 @@ namespace ndn {
     dataNode.length = bufferSize;
     dataNode.data = (guint8 *) bufferTmp;
     (app->dataQue).push_back(dataNode);
-    std::cout << "video times h264_appsrc_data " << t_audio <<std::endl;
+    std::cout << "audioQueueSize " << (app->dataQue).size() <<std::endl;
     t_audio ++;
-//    pthread_mutex_lock(&(app->count_mutex));
-//    if((app->dataQue).size() >= app->rate)
-//       pthread_cond_signal(&(app->count_cond));
-//    pthread_mutex_unlock(&(app->count_mutex));
+    pthread_mutex_lock(&(app->count_mutex));
+    if((app->dataQue).size() > 0)
+       pthread_cond_signal(&(app->count_cond));
+    pthread_mutex_unlock(&(app->count_mutex));
 
 //    std::cout << "CP Audio Done! " << bufferSize <<std::endl;
   }
@@ -92,7 +102,8 @@ namespace ndn {
     VideoAudio *va = &s_va;
     pthread_t thread; 
     int rc;
-    rc = pthread_create(&thread, NULL, h264_appsrc_thread , (void *)va);
+    rc = pthread_create(&thread, NULL, h264_capture_thread , (void *)va);
+//    rc = pthread_create(&thread, NULL, h264_appsrc_thread ,(void *)va);
     std::cout << "h264_appsrc_init OK! " << std::endl;
   }
 /* Call Consume Here From the start*/
@@ -103,20 +114,25 @@ namespace ndn {
     App *video = &(va->v_app);
     App *audio = &(va->a_app);
     std::cout << "Inside the consume_whole! " <<std::endl;
+    int audio_time = audio->rate;
+    int video_time = video->rate;
     for(int seconds = 0; seconds < 60*10 ; seconds++)
     {
-      for(int i=0; i< video->rate; i++)
+      for(int j=0; j< audio_time; j++)
       {
-        Name videoSuffix(std::to_string(seconds*video->rate + i));
-        videoConsumer->consume(videoSuffix);
-//        usleep(100000);
-      }
-      for(int j=0; j< audio->rate; j++)
-      {
-        Name audioSuffix(std::to_string(seconds*audio->rate + j));
+        std::cout << "Consume Audio" << std::endl;
+        Name audioSuffix(std::to_string(seconds*audio_time + j));
         audioConsumer->consume(audioSuffix);
-//        usleep(10000);
+//        usleep(100);
       }
+      for(int i=0; i< video_time; i++)
+      {
+        std::cout << "Consume Video" << std::endl;
+        Name videoSuffix(std::to_string(seconds*video_time + i));
+        videoConsumer->consume(videoSuffix);
+//        usleep(8000);
+      }
+
     }
   }
 } // namespace ndn

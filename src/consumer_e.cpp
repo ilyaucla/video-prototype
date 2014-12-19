@@ -56,8 +56,8 @@ namespace ndn {
       frameConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
                                 (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
     
-      frameConsumer->setContextOption(INTEREST_RETRANSMITTED, 
-                                (ConstInterestCallback)bind(&ConsumerCallback::onRetx, &cb_consumer, _1));
+      frameConsumer->setContextOption(INTEREST_RETRANSMIT, 
+                                (InterestCallback)bind(&ConsumerCallback::onRetx, &cb_consumer, _1));
       frameConsumer->setContextOption(DATA_ENTER_CNTX, 
                                 (DataCallback)bind(&ConsumerCallback::processData, &cb_consumer, _1));
    
