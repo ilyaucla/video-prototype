@@ -73,7 +73,7 @@ namespace ndn{
                           (ContentCallback)bind(&ConsumerCallback::processPayload, con->cb, _1, _2));
 
       end = 16000;
-      sleeptime = 100;
+      sleeptime = 0;
     }else
     {
       sampleConsumer->setContextOption(CONTENT_RETRIEVED, 

@@ -141,13 +141,15 @@ namespace ndn {
   void 
   VideoGenerator::h264_generate_capture (std::string filename)
   {
-    GstElement *pipeline, *convert, *queue3; 
+    GstElement *pipeline, *convert, *queue3, *videorate; 
     GstElement_Duo source, queue, encoder, parser, sink, queue1, queue2;
   
     /* Initialisation */ 
     gst_init (NULL, NULL); 
     /* Create gstreamer elements */ 
     pipeline = gst_pipeline_new ("capture-player"); 
+
+    videorate = gst_element_factory_make("videorate", "videorate");
 
     source.video = gst_element_factory_make ("avfvideosrc", "camera-source"); 
     source.audio = gst_element_factory_make ("osxaudiosrc", "MIC-source"); 
@@ -183,16 +185,16 @@ namespace ndn {
 //    g_object_set (G_OBJECT (source.audio), "do-timestamp", 1, NULL);
 
     g_object_set (G_OBJECT (encoder.video), "speed-preset", 3, NULL); 
-//    g_object_set (G_OBJECT (encoder.video), "byte-stream", TRUE, NULL); 
-//    g_object_set (G_OBJECT (encoder.video), "qp-max", 30, NULL); 
+    g_object_set (G_OBJECT (encoder.video), "byte-stream", TRUE, NULL); 
+    g_object_set (G_OBJECT (encoder.video), "qp-max", 30, NULL); 
 //    g_object_set (G_OBJECT (encoder.video), "interlaced", TRUE, NULL); 
 //    g_object_set (G_OBJECT (source.video), "do-timestamp", 1, NULL);
-//    g_object_set (G_OBJECT (source.video), "num-buffers", -1, NULL);
+    g_object_set (G_OBJECT (source.video), "num-buffers", -1, NULL);
 //    g_object_set (G_OBJECT (source.video), "always-copy", FALSE, NULL);
 //
-//    g_object_set (G_OBJECT (source.audio), "num-buffers", -1, NULL);
+    g_object_set (G_OBJECT (source.audio), "num-buffers", -1, NULL);
 //    g_object_set (G_OBJECT (source.audio), "do-timestamp", 1, NULL);
-//    g_object_set (G_OBJECT (source.audio), "typefind", 1, NULL);
+    g_object_set (G_OBJECT (source.audio), "typefind", 1, NULL);
 //
 //    g_object_set (G_OBJECT (source.video), "sync", TRUE, NULL); 
 //    g_object_set (G_OBJECT (source.audio), "sync", TRUE, NULL); 
@@ -203,9 +205,9 @@ namespace ndn {
     /* Set up the pipeline */ 
     /* we set the input filename to the source element */ 
     /* we add all elements into the pipeline */ 
-    gst_bin_add_many (GST_BIN (pipeline), source.video, encoder.video, parser.video, queue.video, sink.video, source.audio, convert, encoder.audio, parser.audio, queue.audio, sink.audio, queue1.video, queue1.audio, queue3, queue2.video, queue2.audio, NULL); 
+    gst_bin_add_many (GST_BIN (pipeline), source.video, encoder.video, parser.video, queue.video, sink.video, source.audio, convert, encoder.audio, parser.audio, queue.audio, sink.audio, queue1.video, queue1.audio, queue3, queue2.video, queue2.audio, videorate, NULL); 
 
-    gst_element_link_many (source.video, queue.video, encoder.video, queue1.video, parser.video, queue2.video, sink.video, NULL); 
+    gst_element_link_many (source.video, videorate, queue.video, encoder.video, queue1.video, parser.video, queue2.video, sink.video, NULL); 
     /* we link the elements together */ 
 //    gst_bin_add_many (GST_BIN (pipeline), source.audio, convert, encoder.audio, parser.audio, sink.audio, NULL); 
     gst_element_link_many (source.audio, queue.audio, convert, queue3, encoder.audio, queue1.audio, parser.audio, queue2.audio, sink.audio, NULL);

@@ -93,7 +93,7 @@ namespace ndn {
 //          return TRUE; 
 //        }
         
-        std::cout << "ReadratePULL !" << app->rate << std::endl;
+        std::cout << "ReadratePUSH !" << app->rate << std::endl;
         std::cout << "queueSize !" << (app->dataQue).size() << std::endl;
         DataNode tmpNode = (app -> dataQue).front();
         GstBuffer *buffer;
@@ -219,7 +219,7 @@ namespace ndn {
 
         GstBus *bus;
         GMainLoop *loop;
-        GstElement *pipeline;
+        GstElement *pipeline, *mqueue;
         App *video = &(va -> v_app);
         App *audio = &(va -> a_app);
         
@@ -228,6 +228,8 @@ namespace ndn {
         loop = g_main_loop_new (NULL, FALSE);
         /* setup pipeline */
         pipeline = gst_pipeline_new ("pipeline");
+        mqueue = gst_element_factory_make("multiqueue", "multiqueue");
+
 /**********   Video Part **************/
         video->appsrc = gst_element_factory_make ("appsrc", "video_source");
         video->queue = gst_element_factory_make("queue", "video_queue");
@@ -246,10 +248,14 @@ namespace ndn {
         video->rate = ceil(num/double(denom)); //FIX ME
         std::cout << "video->rate " << video->rate << std::endl; 
        
-//        g_object_set (G_OBJECT (video->queue), "max-size-time", 500000000, NULL); 
+        g_object_set (G_OBJECT (video->queue), "max-size-time", 500000000, NULL); 
         g_object_set (G_OBJECT (video->appsrc), "caps", caps, NULL);
-        gst_bin_add_many (GST_BIN (pipeline), video->appsrc, video->decoder, video->queue, video->sink, NULL);
-        gst_element_link_many (video->appsrc, video->decoder, video->queue,video->sink, NULL);
+        gst_bin_add_many (GST_BIN (pipeline), mqueue, video->appsrc, video->decoder, video->queue, video->sink, NULL);
+
+        gst_element_link_many (video->appsrc,video->queue, video->decoder, NULL);
+        g_assert(gst_pad_link(gst_element_get_static_pad(video->decoder, "src"), gst_element_get_request_pad(mqueue,"sink_0")) == GST_PAD_LINK_OK);
+        g_assert(gst_pad_link(gst_element_get_static_pad(mqueue,"src_0"),gst_element_get_static_pad(video->sink, "sink")) == GST_PAD_LINK_OK); 
+
         /* setup appsrc */
 //        g_object_set (G_OBJECT (video->appsrc), "do-timestamp", TRUE, NULL);
         g_signal_connect (video->appsrc, "need-data", G_CALLBACK (feed_data), video);
@@ -271,10 +277,14 @@ namespace ndn {
         audio->rate = samplerate/1000; //FIX ME
         std::cout << "audio->rate " << audio->rate << std::endl; 
       
-//        g_object_set (G_OBJECT (audio->queue), "max-size-time", 500000000, NULL); 
+        g_object_set (G_OBJECT (audio->queue), "max-size-time", 500000000, NULL); 
         g_object_set (G_OBJECT (audio->appsrc), "caps", caps_audio, NULL);
         gst_bin_add_many (GST_BIN (pipeline), audio->appsrc, audio->decoder, audio->queue, audio->sink, NULL);
-        gst_element_link_many (audio->appsrc, audio->decoder, audio->queue, audio->sink, NULL);
+
+        gst_element_link_many(audio->appsrc, audio->queue, audio->decoder, NULL);
+        g_assert(gst_pad_link(gst_element_get_static_pad(audio->decoder, "src"), gst_element_get_request_pad(mqueue,"sink_1")) == GST_PAD_LINK_OK);
+        g_assert(gst_pad_link(gst_element_get_static_pad(mqueue,"src_1"),gst_element_get_static_pad(audio->sink, "sink")) == GST_PAD_LINK_OK); 
+
         /* setup appsrc */
 //        g_object_set (G_OBJECT (audio->appsrc), "do-timestamp", TRUE, NULL);
         g_signal_connect (audio->appsrc, "need-data", G_CALLBACK (feed_data), audio);
@@ -289,7 +299,6 @@ namespace ndn {
         /* play */
 
         gst_element_set_state (pipeline, GST_STATE_PAUSED); 
-        sleep(1);
         gst_element_set_state (pipeline, GST_STATE_PLAYING);
         g_main_loop_run (loop);
         
