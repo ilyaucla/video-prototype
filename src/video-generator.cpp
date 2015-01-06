@@ -188,19 +188,19 @@ namespace ndn {
     g_object_set (G_OBJECT (encoder.video), "byte-stream", TRUE, NULL); 
     g_object_set (G_OBJECT (encoder.video), "qp-max", 30, NULL); 
 //    g_object_set (G_OBJECT (encoder.video), "interlaced", TRUE, NULL); 
-//    g_object_set (G_OBJECT (source.video), "do-timestamp", 1, NULL);
+    g_object_set (G_OBJECT (source.video), "do-timestamp", 1, NULL);
     g_object_set (G_OBJECT (source.video), "num-buffers", -1, NULL);
 //    g_object_set (G_OBJECT (source.video), "always-copy", FALSE, NULL);
 //
     g_object_set (G_OBJECT (source.audio), "num-buffers", -1, NULL);
-//    g_object_set (G_OBJECT (source.audio), "do-timestamp", 1, NULL);
+    g_object_set (G_OBJECT (source.audio), "do-timestamp", 1, NULL);
     g_object_set (G_OBJECT (source.audio), "typefind", 1, NULL);
 //
 //    g_object_set (G_OBJECT (source.video), "sync", TRUE, NULL); 
 //    g_object_set (G_OBJECT (source.audio), "sync", TRUE, NULL); 
 
-//    g_object_set (G_OBJECT (sink.video), "sync", FALSE, NULL); 
-//    g_object_set (G_OBJECT (sink.audio), "sync", FALSE, NULL); 
+    g_object_set (G_OBJECT (sink.video), "sync", FALSE, NULL); 
+    g_object_set (G_OBJECT (sink.audio), "sync", FALSE, NULL); 
 
     /* Set up the pipeline */ 
     /* we set the input filename to the source element */ 

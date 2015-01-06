@@ -258,9 +258,9 @@ namespace ndn {
 
         /* setup appsrc */
 //        g_object_set (G_OBJECT (video->appsrc), "do-timestamp", TRUE, NULL);
-        g_signal_connect (video->appsrc, "need-data", G_CALLBACK (feed_data), video);
-//        g_signal_connect (video->appsrc, "need-data", G_CALLBACK (start_feed), video);
-//        g_signal_connect (video->appsrc, "enough-data", G_CALLBACK (stop_feed), video);
+//        g_signal_connect (video->appsrc, "need-data", G_CALLBACK (feed_data), video);
+        g_signal_connect (video->appsrc, "need-data", G_CALLBACK (start_feed), video);
+        g_signal_connect (video->appsrc, "enough-data", G_CALLBACK (stop_feed), video);
 /**********   Video Part Over**************/
 
 /******* Audio Part *********************/
@@ -287,9 +287,9 @@ namespace ndn {
 
         /* setup appsrc */
 //        g_object_set (G_OBJECT (audio->appsrc), "do-timestamp", TRUE, NULL);
-        g_signal_connect (audio->appsrc, "need-data", G_CALLBACK (feed_data), audio);
-//        g_signal_connect (audio->appsrc, "need-data", G_CALLBACK (start_feed), audio);
-//        g_signal_connect (audio->appsrc, "enough-data", G_CALLBACK (stop_feed), audio);
+//        g_signal_connect (audio->appsrc, "need-data", G_CALLBACK (feed_data), audio);
+        g_signal_connect (audio->appsrc, "need-data", G_CALLBACK (start_feed), audio);
+        g_signal_connect (audio->appsrc, "enough-data", G_CALLBACK (stop_feed), audio);
 /*********Audio Part Over **************/        
 
         /* Set bus */

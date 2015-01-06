@@ -67,10 +67,12 @@ namespace ndn{
     Consumer* sampleConsumer = new Consumer(sampleName, RELIABLE, SEQUENCE);
     if(con->name == "video")
     {
-//      sampleConsumer->setContextOption(EMBEDDED_MANIFESTS, true);
+      sampleConsumer->setContextOption(EMBEDDED_MANIFESTS, true);
       sampleConsumer->setContextOption(CONTENT_RETRIEVAL_SIZE, 1024*1024);
       sampleConsumer->setContextOption(CONTENT_RETRIEVED, 
                           (ContentCallback)bind(&ConsumerCallback::processPayload, con->cb, _1, _2));
+      sampleConsumer->setContextOption(DATA_TO_VERIFY,
+            (DataVerificationCallback)bind(&Verificator::onPacket, verificator, _1));
 
       end = 16000;
       sleeptime = 0;
@@ -86,8 +88,7 @@ namespace ndn{
     sampleConsumer->setContextOption(INTEREST_LIFETIME, 200);
 //    sampleConsumer->setContextOption(INTEREST_RETX,5); //Retransmitted Attempted Time.
    // there is no need for other callback now
-//    sampleConsumer->setContextOption(DATA_TO_VERIFY,
-//                    (DataVerificationCallback)bind(&Verificator::onPacket, verificator, _1));
+
 //    sampleConsumer->setContextOption(MIN_WINDOW_SIZE, 1);
     sampleConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
                               (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, con->cb, _1));
