@@ -117,20 +117,20 @@ namespace ndn {
       read_data (App * app)
       {
         GstFlowReturn ret;
-        pthread_mutex_lock(&(app->count_mutex));
-        while((app -> dataQue).size() == 0 )
-        {
-           pthread_cond_wait(&(app->count_cond), &(app->count_mutex));
-        }
-        pthread_mutex_unlock(&(app->count_mutex));
-
-//        if( (app -> dataQue).size() == 0  )
+//        pthread_mutex_lock(&(app->count_mutex));
+//        while((app -> dataQue).size() == 0 )
 //        {
+//           pthread_cond_wait(&(app->count_cond), &(app->count_mutex));
+//        }
+//        pthread_mutex_unlock(&(app->count_mutex));
+
+        if( (app -> dataQue).size() == 0  )
+        {
 ////          usleep(1000);
 ////          if(app->rate == 44)
 ////            std::cout<< "audioQueue EMPTY!!" << std::endl;
-//          return TRUE; 
-//        }
+          return TRUE; 
+        }
         
         std::cout << "Readrate !" << app->rate << std::endl;
         DataNode tmpNode = (app -> dataQue).front();
@@ -246,10 +246,10 @@ namespace ndn {
         video->rate = ceil(num/double(denom)); //FIX ME
         std::cout << "video->rate " << video->rate << std::endl; 
        
-        g_object_set (G_OBJECT (video->queue), "max-size-time", 500000000, NULL); 
+//        g_object_set (G_OBJECT (video->queue), "max-size-time", 500000000, NULL); 
         g_object_set (G_OBJECT (video->appsrc), "caps", caps, NULL);
-        gst_bin_add_many (GST_BIN (pipeline), video->appsrc, video->queue, video->decoder, video->sink, NULL);
-        gst_element_link_many (video->appsrc, video->queue, video->decoder, video->sink, NULL);
+        gst_bin_add_many (GST_BIN (pipeline), video->appsrc, video->decoder, video->queue, video->sink, NULL);
+        gst_element_link_many (video->appsrc, video->decoder, video->queue,video->sink, NULL);
         /* setup appsrc */
 //        g_object_set (G_OBJECT (video->appsrc), "do-timestamp", TRUE, NULL);
         g_signal_connect (video->appsrc, "need-data", G_CALLBACK (feed_data), video);
@@ -271,10 +271,10 @@ namespace ndn {
         audio->rate = samplerate/1000; //FIX ME
         std::cout << "audio->rate " << audio->rate << std::endl; 
       
-        g_object_set (G_OBJECT (audio->queue), "max-size-time", 500000000, NULL); 
+//        g_object_set (G_OBJECT (audio->queue), "max-size-time", 500000000, NULL); 
         g_object_set (G_OBJECT (audio->appsrc), "caps", caps_audio, NULL);
-        gst_bin_add_many (GST_BIN (pipeline), audio->appsrc, audio->queue, audio->decoder, audio->sink, NULL);
-        gst_element_link_many (audio->appsrc, audio->queue, audio->decoder, audio->sink, NULL);
+        gst_bin_add_many (GST_BIN (pipeline), audio->appsrc, audio->decoder, audio->queue, audio->sink, NULL);
+        gst_element_link_many (audio->appsrc, audio->decoder, audio->queue, audio->sink, NULL);
         /* setup appsrc */
 //        g_object_set (G_OBJECT (audio->appsrc), "do-timestamp", TRUE, NULL);
         g_signal_connect (audio->appsrc, "need-data", G_CALLBACK (feed_data), audio);
@@ -287,6 +287,8 @@ namespace ndn {
         gst_bus_add_watch (bus, (GstBusFunc)bus_call, pipeline);
         gst_object_unref (bus);
         /* play */
+
+        gst_element_set_state (pipeline, GST_STATE_PAUSED); 
         sleep(1);
         gst_element_set_state (pipeline, GST_STATE_PLAYING);
         g_main_loop_run (loop);
