@@ -21,7 +21,7 @@ namespace ndn {
 //  			filename += argv[1];
 //  		else
 //  			filename += "duoyan.mp4";
-      filename = "/Capture";
+      filename = "/ndn/edu/ucla/capture";
       std::cout<<filename<<std::endl;
 
       ConsumerCallback cb_consumer;

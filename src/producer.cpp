@@ -46,7 +46,7 @@ namespace ndn {
 //      sampleProducer->setup();
 
 //      generator.h264_generate_whole(filename);
-      filename = "/Capture";
+      filename = "/ndn/edu/ucla/capture";
       generator.h264_generate_capture(filename);
 
       std::cout << "COOL~" << std::endl;
