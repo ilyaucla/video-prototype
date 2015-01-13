@@ -10,8 +10,8 @@
 
 namespace ndn {
 
-  int t_video = 0;
-  int t_audio = 0;
+//  int t_video = 0;
+//  int t_audio = 0;
 
   VideoPlayer::VideoPlayer()
   {
@@ -61,8 +61,8 @@ namespace ndn {
     dataNode.length = bufferSize;
     dataNode.data = (guint8 *) bufferTmp;
     (app->dataQue).push_back(dataNode);
-    std::cout << "videoQueueSize " << (app->dataQue).size() <<std::endl;
-    t_video ++;
+//    std::cout << "videoQueueSize " << (app->dataQue).size() <<std::endl;
+//    t_video ++;
     pthread_mutex_lock(&(app->count_mutex));
     if((app->dataQue).size() > 0)
        pthread_cond_signal(&(app->count_cond));
@@ -82,8 +82,8 @@ namespace ndn {
     dataNode.length = bufferSize;
     dataNode.data = (guint8 *) bufferTmp;
     (app->dataQue).push_back(dataNode);
-    std::cout << "audioQueueSize " << (app->dataQue).size() <<std::endl;
-    t_audio ++;
+//    std::cout << "audioQueueSize " << (app->dataQue).size() <<std::endl;
+//    t_audio ++;
     pthread_mutex_lock(&(app->count_mutex));
     if((app->dataQue).size() > 0)
        pthread_cond_signal(&(app->count_cond));

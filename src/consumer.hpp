@@ -74,13 +74,13 @@ namespace ndn{
 //      sampleConsumer->setContextOption(DATA_TO_VERIFY,
 //            (DataVerificationCallback)bind(&Verificator::onPacket, verificator, _1));
 
-      end = 16000;
+      end = 13000000;
       sleeptime = 0;
     }else
     {
       sampleConsumer->setContextOption(CONTENT_RETRIEVED, 
                           (ContentCallback)bind(&ConsumerCallback::processPayloadAudio, con->cb, _1, _2));
-      end = 13000;
+      end = 13000000;
       sleeptime = 0;
     }
         

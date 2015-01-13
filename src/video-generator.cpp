@@ -23,7 +23,7 @@ namespace ndn {
   {
     time_t time_end = std::time(0);
     double seconds = difftime(time_end, time_start);
-    std::cout << seconds <<" seconds have passed" << std::endl;
+    std::cout << "Test Result ---------  " << seconds <<" seconds:" << std::endl;
     std::cout << "Video Bytes: " << pro_video.throughput << "  Throughput: " << pro_video.throughput/seconds << " Bytes/Seconds" <<std::endl;
     std::cout << "Audio Bytes: " << pro_audio.throughput << "  Throughput: " << pro_audio.throughput/seconds << " Bytes/Seconds" <<std::endl;
     std::cout << "Total Bytes: " << pro_video.throughput + pro_audio.throughput << "  Throughput: " << (pro_video.throughput + pro_audio.throughput)/seconds << " Bytes/Seconds" << std::endl;

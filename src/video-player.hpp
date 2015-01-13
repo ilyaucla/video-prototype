@@ -132,7 +132,7 @@ namespace ndn {
           return TRUE; 
         }
         
-        std::cout << "Readrate !" << app->rate << std::endl;
+//        std::cout << "Readrate !" << app->rate << std::endl;
         DataNode tmpNode = (app -> dataQue).front();
         GstBuffer *buffer;
         buffer = gst_buffer_new ();
