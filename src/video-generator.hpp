@@ -47,6 +47,20 @@ private:
   class VideoGenerator
   {
     public:
+      struct Producer_Need
+      {
+        GstElement *sink;
+//        Producer *streaminfoProducer;
+//        Producer *sampleProducer;
+        std::string name;
+        std::string filename;
+        std::string streaminfo;
+        gsize throughput;
+        ProducerCallback streaminfoCB;
+        ProducerCallback sampleCB;
+
+//        ProducerCallback cbProducer;
+      };
 
       VideoGenerator();
       char * 
@@ -60,20 +74,9 @@ private:
       void 
       h264_generate_whole (std::string filename);
       void 
-      h264_generate_capture (std::string filename);
+      h264_generate_capture (std::string filename, Producer_Need *pro_video, Producer_Need *pro_audio);
       void
       h264_file_info (std::string filename);
-      struct Producer_Need
-      {
-        GstElement *sink;
-//        Producer *streaminfoProducer;
-//        Producer *sampleProducer;
-        std::string name;
-        std::string filename;
-        gsize throughput;
-//        ProducerCallback cbProducer;
-      };
-
 
     private:
 
@@ -96,7 +99,6 @@ private:
       };
 
 
-
 /* 
  * Lijing Wang
  * Now use thread produce streaminfo & frames & samples seprately. 
@@ -115,30 +117,29 @@ private:
 
         Producer *streaminfoProducer;
         Producer *sampleProducer;
-        ProducerCallback streaminfoCB;
-        ProducerCallback sampleCB;
 
         time_t time_start = std::time(0);
         size_t samplenumber = 0;
-
 
 //        ProducerCallback cb_producer;
         std::cout << pro->filename + "/" + pro->name +  "/streaminfo" << std::endl;
         Name videoName_streaminfo(pro->filename + "/" + pro->name +  "/streaminfo");
       /* streaminfoFrameProducer */
         streaminfoProducer = new Producer(videoName_streaminfo);
-        streaminfoCB.setProducer(streaminfoProducer); // needed for some callback functionality
+        pro->streaminfoCB.setProducer(streaminfoProducer); // needed for some callback functionality
         streaminfoProducer->setContextOption(INTEREST_ENTER_CNTX,
-                      (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &streaminfoCB, _1));
+                      (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &(pro->streaminfoCB), _1));
         streaminfoProducer->setContextOption(DATA_LEAVE_CNTX,
-            (ConstDataCallback)bind(&ProducerCallback::processOutgoingData, &streaminfoCB, _1));
+                      (ConstDataCallback)bind(&ProducerCallback::processOutgoingData, &(pro->streaminfoCB), _1));
+        streaminfoProducer->setContextOption(INTEREST_TO_PROCESS,
+                      (ConstInterestCallback)bind(&ProducerCallback::processStreaminfoInterest, &(pro->streaminfoCB), _1));
         streaminfoProducer->setup();
 
         Signer signer;
         Name videoName_content(pro->filename + "/" + pro->name + "/content");
         sampleProducer = new Producer(videoName_content);
-        sampleCB.setProducer(sampleProducer); // needed for some callback functionality
-        sampleCB.setSampleNumber(&samplenumber);
+        pro->sampleCB.setProducer(sampleProducer); // needed for some callback functionality
+        pro->sampleCB.setSampleNumber(&samplenumber);
         if(pro->name == "video")
         {
           std::cout << "I'm video~ "<<std::endl;
@@ -152,11 +153,11 @@ private:
           sampleProducer->setContextOption(SND_BUF_SIZE,100000);
         }
         sampleProducer->setContextOption(INTEREST_ENTER_CNTX,
-                        (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &sampleCB, _1));
+                        (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &(pro->sampleCB), _1));
         sampleProducer->setContextOption(DATA_LEAVE_CNTX,
-            (ConstDataCallback)bind(&ProducerCallback::processOutgoingData, &sampleCB, _1));
+            (ConstDataCallback)bind(&ProducerCallback::processOutgoingData, &(pro->sampleCB), _1));
         sampleProducer->setContextOption(INTEREST_TO_PROCESS,
-                          (ConstInterestCallback)bind(&ProducerCallback::processInterest, &sampleCB, _1));
+                          (ConstInterestCallback)bind(&ProducerCallback::processInterest, &(pro->sampleCB), _1));
         sampleProducer->setup();          
         
         do {
@@ -169,8 +170,18 @@ private:
           {
             caps = gst_sample_get_caps(sample);
             streaminfo = gst_caps_to_string(caps);
+            pro->streaminfo = streaminfo; //Remember the streaminfoSuffix
+
+            if(pro->name == "video")
+            {
+              pro->streaminfoCB.setStreaminfoVideo(streaminfo); 
+            }else
+            {
+              pro->streaminfoCB.setStreaminfoAudio(streaminfo); 
+            }
+
             Name streaminfoSuffix("");
-            streaminfoProducer->produce(streaminfoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size()+1);
+//            streaminfoProducer->produce(streaminfoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size()+1);
             std::cout << "produce " << pro->name << " streaminfo OK" << streaminfo << std::endl;
             std::cout << "streaminfo size "<< streaminfo.size() + 1 << std::endl;
           }

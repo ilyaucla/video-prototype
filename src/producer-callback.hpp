@@ -22,17 +22,23 @@ namespace ndn {
     setSampleNumber(size_t* n);
 
     void
+    setStreaminfoVideo(std::string video);
+
+    void 
+    setStreaminfoAudio(std::string audio);
+
+    void
     processConstData(const Data& data);
     
+    void
+    processStreaminfoInterest(const Interest& interest);
+
     void
     processInterest(const Interest& interest);
     
     void
-    processOutgoingData(const Data& data)
-    {
-      std::cout << "OutgoingData " << data.getName() << std::endl;
-//      std::cout << data.getFinalBlockId() << std::endl;
-    }
+    processOutgoingData(const Data& data);
+
     void
     processIncomingInterest(const Interest& interest);
     
@@ -42,9 +48,15 @@ namespace ndn {
     void
     processConstInterest(const Interest& interest);
   
+    unsigned long interest_incoming = 0;
+    unsigned long interest_outgoing = 0;
+    unsigned long interest_nohit = 0;
+
   private:
     Producer* m_producer;
     size_t* m_curnum;
+    std::string m_streaminfovideo;
+    std::string m_streaminfoaudio;
   };
   
 } // namespace ndn

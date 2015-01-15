@@ -17,23 +17,6 @@ namespace ndn {
 
   int times_video = 0;
   int times_audio = 0;
-  time_t time_start;
-  time_t time_end;
-  gsize payload_v = 0;
-  gsize payload_a = 0;
-  gsize data_v = 0;
-  gsize data_a = 0;
-
-  static void sig_int(int num)
-  {
-    time_t time_end = std::time(0);
-    double seconds = difftime(time_end, time_start);
-    std::cout << "Test Result ---------  " << seconds <<" seconds:" << std::endl;
-    std::cout << "Video Bytes: " << payload_v << "  PayLoad_Throughput: " << payload_v/seconds << " Bytes/Seconds" <<std::endl;
-    std::cout << "Audio Bytes: " << payload_a << "  PayLoad_Throughput: " << payload_a/seconds << " Bytes/Seconds" <<std::endl;
-    std::cout << "Total Bytes: " << payload_v + payload_a << "  PayLoad_Throughput: " << (payload_v + payload_a)/seconds << " Bytes/Seconds" << std::endl;
-    return;
-  }
  
   ConsumerCallback::ConsumerCallback()
   {
@@ -71,9 +54,6 @@ namespace ndn {
   void
   ConsumerCallback::processStreaminfo(const uint8_t* buffer, size_t bufferSize)
   {
-    time_start = std::time(0);
-    signal(SIGINT, sig_int);
-
     std::string streaminfo((char*) buffer);
   //  long fileLength = std::stol(content);
   //  std::cout << "bufferSize " << bufferSize <<std::endl;
@@ -95,6 +75,7 @@ namespace ndn {
   void
   ConsumerCallback::processData(Data& data)
   {
+    interest_r ++;
 //    std::cout << "DATA IN CNTX Name: " << data.getName() << "FinalBlockId: " <<data.getFinalBlockId() << std::endl;
   }
   
@@ -111,7 +92,15 @@ namespace ndn {
   void
   ConsumerCallback::processLeavingInterest(Interest& interest)
   {
+    interest_s ++;
 //   std::cout << "LEAVES " << interest.toUri() << std::endl;
 //    std::cout << "LEAVES name " << interest.getName() << std::endl;
   }  
+
+  void
+  ConsumerCallback::onRetx(Interest& interest)
+  {
+    interest_retx ++;
+    std::cout << "Retransmitted " << interest.getName() << std::endl;
+  }
 } // namespace ndn

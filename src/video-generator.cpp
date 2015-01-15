@@ -14,21 +14,8 @@ namespace ndn {
 
 //  gsize throughput_v;
 //  gsize throughput_a;
-  time_t time_start;
-  VideoGenerator::Producer_Need pro_video;
-  VideoGenerator::Producer_Need pro_audio;
 
 
-  static void sig_int(int num)
-  {
-    time_t time_end = std::time(0);
-    double seconds = difftime(time_end, time_start);
-    std::cout << "Test Result ---------  " << seconds <<" seconds:" << std::endl;
-    std::cout << "Video Bytes: " << pro_video.throughput << "  Throughput: " << pro_video.throughput/seconds << " Bytes/Seconds" <<std::endl;
-    std::cout << "Audio Bytes: " << pro_audio.throughput << "  Throughput: " << pro_audio.throughput/seconds << " Bytes/Seconds" <<std::endl;
-    std::cout << "Total Bytes: " << pro_video.throughput + pro_audio.throughput << "  Throughput: " << (pro_video.throughput + pro_audio.throughput)/seconds << " Bytes/Seconds" << std::endl;
-    return;
-  }
 
   VideoGenerator::VideoGenerator()
   {
@@ -158,12 +145,11 @@ namespace ndn {
 
   /* get the caps from h264parse */
   void 
-  VideoGenerator::h264_generate_capture (std::string filename)
+  VideoGenerator::h264_generate_capture (std::string filename, Producer_Need *pro_video, Producer_Need *pro_audio)
   {
     GstElement *pipeline, *convert, *queue3, *videorate; 
     GstElement_Duo source, queue, encoder, parser, sink, queue1, queue2;
   
-    signal(SIGINT, sig_int);
 
     /* Initialisation */ 
     gst_init (NULL, NULL); 
@@ -237,29 +223,28 @@ namespace ndn {
     gst_element_set_state (pipeline, GST_STATE_PAUSED); 
     gst_element_set_state (pipeline, GST_STATE_PLAYING); 
 
-    time_start = std::time(0);
 //    throughput_v = 0;
     std::cout << "video thread start!" << std::endl;
 //    Producer_Need pro_video;
     pthread_t thread_video; 
     int rc_video;
-    pro_video.filename = filename;
-    pro_video.sink = sink.video;
-    pro_video.name = "video";
-    pro_video.throughput = 0;
-    rc_video = pthread_create(&thread_video, NULL, produce_thread , (void *)&pro_video);
+    pro_video->filename = filename;
+    pro_video->sink = sink.video;
+    pro_video->name = "video";
+    pro_video->throughput = 0;
+    rc_video = pthread_create(&thread_video, NULL, produce_thread , (void *)pro_video);
  
 //    sleep(2);
 //    throughput_a = 0;
     std::cout << "audio thread start!" << std::endl;
-//    Producer_Need pro_audio;
+//    Producer_Need pro_audio->
     pthread_t thread_audio; 
     int rc_audio;
-    pro_audio.filename = filename;
-    pro_audio.sink = sink.audio;
-    pro_audio.name = "audio";
-    pro_audio.throughput = 0;
-    rc_audio = pthread_create(&thread_audio, NULL, produce_thread , (void *)&pro_audio);
+    pro_audio->filename = filename;
+    pro_audio->sink = sink.audio;
+    pro_audio->name = "audio";
+    pro_audio->throughput = 0;
+    rc_audio = pthread_create(&thread_audio, NULL, produce_thread , (void *)pro_audio);
 
     sleep(30000);
 //    gst_element_set_state (pipeline, GST_STATE_NULL); 

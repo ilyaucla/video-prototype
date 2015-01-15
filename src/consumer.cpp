@@ -11,6 +11,33 @@
 namespace ndn {
 // Additional nested namespace could be used to prevent/limit name contentions
 
+
+  time_t time_start;
+  ConsumerCallback cb_consumer;
+
+  static void sig_int(int num)
+  {
+    time_t time_end = std::time(0);
+    double seconds = difftime(time_end, time_start);
+    std::cout << "  " << std::endl;
+    std::cout << "｡:.ﾟヽ(*´∀`)ﾉﾟ. Test Result ヽ(✿ﾟ▽ﾟ)ノ  " << std::endl;
+    std::cout << "  " << std::endl;
+    std::cout << "-------- Throughput --------  " << std::endl;
+    std::cout << "Video Bytes: " << cb_consumer.payload_v << "  PayLoad_Throughput: " << cb_consumer.payload_v/seconds << " Bytes/Seconds" <<std::endl;
+    std::cout << "Audio Bytes: " << cb_consumer.payload_a << "  PayLoad_Throughput: " << cb_consumer.payload_a/seconds << " Bytes/Seconds" <<std::endl;
+    std::cout << "Total Bytes: " << cb_consumer.payload_v + cb_consumer.payload_a << "  PayLoad_Throughput: " << (cb_consumer.payload_v + cb_consumer.payload_a)/seconds << " Bytes/Seconds" << std::endl;
+    std::cout << "  " << std::endl;
+    std::cout << "-------- Interest --------  " << std::endl;
+    std::cout << "Interest_Send: " << cb_consumer.interest_s << "  Interest_Send_Speed: " <<  cb_consumer.interest_s/seconds << " /Seconds" <<  std::endl;
+    std::cout << "Interest_Receive: " << cb_consumer.interest_r << "  Interest_Receive_Speed: " <<  cb_consumer.interest_r/seconds << " /Seconds" <<  std::endl;
+    std::cout << "Interest_Retransfer: " << cb_consumer.interest_retx << " Interest_Retransfer_Speed: " << cb_consumer.interest_retx/seconds << " /Seconds" << std::endl;
+    std::cout << "Interest_Useful Percentage: " << double(cb_consumer.interest_r)/double(cb_consumer.interest_s)*100 <<"%" << std::endl;
+    std::cout << "  " << std::endl;
+    std::cout << "---------- OVER ----------  " << seconds <<" seconds" << std::endl;
+
+    return;
+  }
+
   int
   main(int argc, char** argv)
   {
@@ -23,8 +50,6 @@ namespace ndn {
 //  			filename += "duoyan.mp4";
       filename = "/ndn/edu/ucla/capture";
       std::cout<<filename<<std::endl;
-
-      ConsumerCallback cb_consumer;
 
       Name videoinfoName(filename + "/video/streaminfo");
       Consumer* videoinfoConsumer = new Consumer(videoinfoName, RELIABLE, DATAGRAM );
@@ -98,6 +123,9 @@ namespace ndn {
       audioConsumer->setContextOption(DATA_ENTER_CNTX, 
                                 (DataCallback)bind(&ConsumerCallback::processData, &cb_consumer, _1));
       */
+
+      signal(SIGINT, sig_int);
+
       time_t time_start_0 = std::time(0);
       std::cout << "Before consume " << time_start_0 << std::endl;
 
@@ -107,6 +135,9 @@ namespace ndn {
       audioData.name = "audio";
       audioData.cb = &cb_consumer ;
       pthread_t thread_audio; 
+
+      time_start = std::time(0);
+
       rc_audio = pthread_create(&thread_audio, NULL, consume_thread , (void *)&audioData);
 
       int rc_video;

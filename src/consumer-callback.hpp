@@ -48,10 +48,7 @@ namespace ndn {
     processLeavingInterest(Interest& interest);
     
     void
-    onRetx(Interest& interest)
-    {
-      std::cout << "Retransmitted " << interest.getName() << std::endl;
-    }
+    onRetx(Interest& interest);
 
     void
     processFile(const uint8_t* buffer, size_t bufferSize)
@@ -64,7 +61,15 @@ namespace ndn {
       filestr.close();
  
     }
+
     VideoPlayer player;
+    gsize payload_v = 0;
+    gsize payload_a = 0;
+    gsize interest_s = 0;
+    gsize interest_r = 0;
+    gsize interest_retx = 0;
+    gsize data_v = 0;
+    gsize data_a = 0;
   };
 
 } // namespace ndn
