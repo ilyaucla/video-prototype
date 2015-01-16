@@ -188,8 +188,8 @@ private:
           buffer = gst_sample_get_buffer (sample);
           gst_buffer_map (buffer, &map, GST_MAP_READ);
           Name sampleSuffix(std::to_string(samplenumber));
-          std::cout << pro->name << " sample number: "<< std::dec << samplenumber <<std::endl;
-          std::cout << pro->name <<" sample Size: "<< std::dec << map.size * sizeof(uint8_t) <<std::endl;
+//          std::cout << pro->name << " sample number: "<< std::dec << samplenumber <<std::endl;
+//          std::cout << pro->name <<" sample Size: "<< std::dec << map.size * sizeof(uint8_t) <<std::endl;
           pro->throughput += map.size * sizeof(uint8_t);
 
 //          if( samplenumber % 100 != 0)

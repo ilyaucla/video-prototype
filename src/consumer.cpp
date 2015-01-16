@@ -154,7 +154,7 @@ namespace ndn {
       double seconds = difftime(time_end_0, time_start_0);
       std::cout << seconds << " seconds have passed" << std::endl;
 
-      sleep(3000); // because consume() is non-blocking
+      sleep(30000000); // because consume() is non-blocking
       
     }
     catch(std::exception& e) {

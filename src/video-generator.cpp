@@ -246,7 +246,7 @@ namespace ndn {
     pro_audio->throughput = 0;
     rc_audio = pthread_create(&thread_audio, NULL, produce_thread , (void *)pro_audio);
 
-    sleep(30000);
+    sleep(30000000);
 //    gst_element_set_state (pipeline, GST_STATE_NULL); 
     g_print ("Deleting pipeline\n"); 
     return;
