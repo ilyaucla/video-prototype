@@ -80,6 +80,8 @@ namespace ndn{
     {
       sampleConsumer->setContextOption(CONTENT_RETRIEVED, 
                           (ContentCallback)bind(&ConsumerCallback::processPayloadAudio, con->cb, _1, _2));
+//      sampleConsumer->setContextOption(DATA_TO_VERIFY,
+//            (DataVerificationCallback)bind(&Verificator::onPacket, verificator, _1));
       end = 13000000;
       sleeptime = 0;
     }
