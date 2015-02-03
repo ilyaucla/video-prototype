@@ -56,7 +56,7 @@ namespace ndn{
   static void
   *consume_thread (void * threadData)
   {
-    Verificator* verificator = new Verificator();
+//    Verificator* verificator = new Verificator();
     Consumer_Need *con;
     con = (Consumer_Need *) threadData;
     int end;

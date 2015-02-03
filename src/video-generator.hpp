@@ -135,7 +135,7 @@ private:
                       (ConstInterestCallback)bind(&ProducerCallback::processStreaminfoInterest, &(pro->streaminfoCB), _1));
         streaminfoProducer->setup();
 
-        Signer signer;
+//        Signer signer;
         Name videoName_content(pro->filename + "/" + pro->name + "/content");
         sampleProducer = new Producer(videoName_content);
         pro->sampleCB.setProducer(sampleProducer); // needed for some callback functionality
