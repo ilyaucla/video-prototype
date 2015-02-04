@@ -127,10 +127,11 @@ private:
       /* streaminfoFrameProducer */
         streaminfoProducer = new Producer(videoName_streaminfo);
         pro->streaminfoCB.setProducer(streaminfoProducer); // needed for some callback functionality
+        pro->streaminfoCB.setSampleNumber(&samplenumber);
         streaminfoProducer->setContextOption(INTEREST_ENTER_CNTX,
                       (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &(pro->streaminfoCB), _1));
         streaminfoProducer->setContextOption(DATA_LEAVE_CNTX,
-                      (ConstDataCallback)bind(&ProducerCallback::processOutgoingData, &(pro->streaminfoCB), _1));
+                      (ConstDataCallback)bind(&ProducerCallback::processOutgoingStreaminfo, &(pro->streaminfoCB), _1));
         streaminfoProducer->setContextOption(INTEREST_TO_PROCESS,
                       (ConstInterestCallback)bind(&ProducerCallback::processStreaminfoInterest, &(pro->streaminfoCB), _1));
         streaminfoProducer->setup();
@@ -168,7 +169,7 @@ private:
             g_print("Meet the EOS!\n");
             break;
             }
-          if ( samplenumber == 0)
+          if ( samplenumber % 100 == 0)
           {
             caps = gst_sample_get_caps(sample);
             streaminfo = gst_caps_to_string(caps);
@@ -182,10 +183,10 @@ private:
               pro->streaminfoCB.setStreaminfoAudio(streaminfo); 
             }
 
-            Name streaminfoSuffix("");
-//            streaminfoProducer->produce(streaminfoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size()+1);
-            std::cout << "produce " << pro->name << " streaminfo OK" << streaminfo << std::endl;
-            std::cout << "streaminfo size "<< streaminfo.size() + 1 << std::endl;
+            Name streaminfoSuffix(std::to_string(samplenumber));
+            streaminfoProducer->produce(streaminfoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size()+1);
+//            std::cout << "produce " << pro->name << " streaminfo OK" << streaminfo << std::endl;
+//            std::cout << "streaminfo size "<< streaminfo.size() + 1 << std::endl;
           }
           buffer = gst_sample_get_buffer (sample);
           gst_buffer_map (buffer, &map, GST_MAP_READ);

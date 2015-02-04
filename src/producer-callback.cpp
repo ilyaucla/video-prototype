@@ -47,8 +47,8 @@ namespace ndn {
   ProducerCallback::processStreaminfoInterest(const Interest& interest)
   {
     interest_nohit ++; 
-    std::cout << "NO HIT STREAMINFO Interest!" << interest.getName().toUri() << std::endl;
-    std::string type = interest.getName().get(-2).toUri();
+    std::cout << "NO HIT STREAMINFO Interest! Name: " << interest.getName().toUri() << std::endl;
+    std::string type = interest.getName().get(-3).toUri();
     std::string streaminfo;
     if(type == "video")
     {
@@ -57,9 +57,11 @@ namespace ndn {
     {
       streaminfo = m_streaminfoaudio;
     }
-    Name streaminfoSuffix("");
+    std::cout << "current_number: " << std::dec << *m_curnum << std::endl;
+    Name streaminfoSuffix(Name(interest.getName().get(-1).toUri()).append(std::to_string(*m_curnum)));
+//    Name streaminfoSuffix("");
     m_producer->produce(streaminfoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size()+1); 
-    std::cout << "produce " << type << " streaminfo AGAIN" << streaminfo << std::endl;
+    std::cout << "produce " << type << " streaminfo AGAIN " << streaminfo << std::endl;
     std::cout << "streaminfo size "<< streaminfo.size() + 1 << std::endl;
   }
 
@@ -98,6 +100,14 @@ namespace ndn {
   {
     interest_outgoing ++;
   //  std::cout << "OutgoingData " << data.getName() << std::endl;
+  //    std::cout << data.getFinalBlockId() << std::endl;
+  }
+
+  void
+  ProducerCallback::processOutgoingStreaminfo(const Data& data)
+  {
+  //  interest_outgoing ++;
+    std::cout << "OutgoingStreaminfo Name" << data.getName() << std::endl;
   //    std::cout << data.getFinalBlockId() << std::endl;
   }
  

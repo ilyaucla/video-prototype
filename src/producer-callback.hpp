@@ -38,6 +38,10 @@ namespace ndn {
     
     void
     processOutgoingData(const Data& data);
+   
+    void
+    processOutgoingStreaminfo(const Data& data);
+
 
     void
     processIncomingInterest(const Interest& interest);

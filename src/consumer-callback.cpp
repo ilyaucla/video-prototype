@@ -73,6 +73,22 @@ namespace ndn {
   }
 
   void
+  ConsumerCallback::streaminfoEnter(Data& data)
+  {
+    std::string start_frame_str = data.getName().get(-2).toUri();
+    start_frame_v = std::stoi(start_frame_str);
+    std::cout << "streaminfoEnter Name: " << data.getName() << " start_frame " << start_frame_v << std::endl;
+  }
+
+  void
+  ConsumerCallback::streaminfoEnterAudio(Data& data)
+  {
+    std::string start_frame_str = data.getName().get(-2).toUri();
+    start_frame_a = std::stoi(start_frame_str);
+    std::cout << "streaminfoEnter Name: " << data.getName() << " start_frame " << start_frame_a << std::endl;
+  }
+
+  void
   ConsumerCallback::processData(Data& data)
   {
     interest_r ++;
@@ -89,6 +105,11 @@ namespace ndn {
   ConsumerCallback::processConstData(const Data& data)
   {}
   
+  void
+  ConsumerCallback::processLeavingStreaminfo(Interest& interest)
+  {
+    std::cout << "LEAVES streaminfo name " << interest.getName() << std::endl;
+  }
   void
   ConsumerCallback::processLeavingInterest(Interest& interest)
   {

@@ -64,6 +64,8 @@ namespace ndn{
 
     Name sampleName(con->filename + "/" + con->name + "/" + "content");
 
+    gsize startFrameNum;
+
     Consumer* sampleConsumer = new Consumer(sampleName, RELIABLE, SEQUENCE);
     if(con->name == "video")
     {
@@ -76,6 +78,7 @@ namespace ndn{
 
       end = 13000000;
       sleeptime = 0;
+      startFrameNum = (con->cb)->start_frame_v;
     }else
     {
       sampleConsumer->setContextOption(CONTENT_RETRIEVED, 
@@ -84,11 +87,12 @@ namespace ndn{
 //            (DataVerificationCallback)bind(&Verificator::onPacket, verificator, _1));
       end = 13000000;
       sleeptime = 0;
+      startFrameNum = (con->cb)->start_frame_a;
     }
         
     sampleConsumer->setContextOption(MUST_BE_FRESH_S, true);
-    sampleConsumer->setContextOption(INTEREST_LIFETIME, 200);
-//    sampleConsumer->setContextOption(INTEREST_RETX,5); //Retransmitted Attempted Time.
+    sampleConsumer->setContextOption(INTEREST_LIFETIME, 150);
+    sampleConsumer->setContextOption(INTEREST_RETX,0); //Retransmitted Attempted Time.
    // there is no need for other callback now
 
 //    sampleConsumer->setContextOption(MIN_WINDOW_SIZE, 1);
@@ -99,8 +103,9 @@ namespace ndn{
     sampleConsumer->setContextOption(DATA_ENTER_CNTX, 
                               (DataCallback)bind(&ConsumerCallback::processData, con->cb, _1));
 
+    std::cout <<"startFrameNum " << startFrameNum << std::endl;
     
-    for (int i=0; i<end; i++)
+    for (int i = startFrameNum; i<end; i++)
     { 
       Name sampleSuffix(std::to_string(i));
       sampleConsumer->consume(sampleSuffix);

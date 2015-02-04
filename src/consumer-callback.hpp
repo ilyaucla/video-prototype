@@ -38,6 +38,12 @@ namespace ndn {
     void
     processData(Data& data);
     
+    void
+    streaminfoEnter(Data& data);
+
+    void
+    streaminfoEnterAudio(Data& data);
+
     bool
     verifyData(Data& data);
     
@@ -47,6 +53,9 @@ namespace ndn {
     void
     processLeavingInterest(Interest& interest);
     
+    void
+    processLeavingStreaminfo(Interest& interest);
+
     void
     onRetx(Interest& interest);
 
@@ -70,6 +79,8 @@ namespace ndn {
     gsize interest_retx = 0;
     gsize data_v = 0;
     gsize data_a = 0;
+    gsize start_frame_v = 0;
+    gsize start_frame_a = 0;
   };
 
 } // namespace ndn

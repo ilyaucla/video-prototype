@@ -49,27 +49,41 @@ namespace ndn {
 //  		else
 //  			filename += "duoyan.mp4";
       filename = "/ndn/edu/ucla/capture";
-      std::cout<<filename<<std::endl;
+//      std::cout<<filename<<std::endl;
 
       Name videoinfoName(filename + "/video/streaminfo");
       Consumer* videoinfoConsumer = new Consumer(videoinfoName, RELIABLE, DATAGRAM );
       videoinfoConsumer->setContextOption(MUST_BE_FRESH_S, true);
+      videoinfoConsumer->setContextOption(RIGHTMOST_CHILD, true);
+//      videoinfoConsumer->setContextOption(DEFAULT_MAX_SUFFIX_COMP, 1);
       videoinfoConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
-        (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
+        (InterestCallback)bind(&ConsumerCallback::processLeavingStreaminfo, &cb_consumer, _1));
       videoinfoConsumer->setContextOption(CONTENT_RETRIEVED, 
         (ContentCallback)bind(&ConsumerCallback::processStreaminfo, &cb_consumer, _1, _2));
+      videoinfoConsumer->setContextOption(DATA_ENTER_CNTX, 
+        (DataCallback)bind(&ConsumerCallback::streaminfoEnter,&cb_consumer , _1));
 
-      videoinfoConsumer->consume(Name());
+      if(argc > 1)
+        videoinfoConsumer->consume(Name(argv[1]));
+      else
+        videoinfoConsumer->consume(Name(""));
 
       Name audioinfoName(filename + "/audio/streaminfo");
       Consumer* audioinfoConsumer = new Consumer(audioinfoName, RELIABLE, DATAGRAM );
       audioinfoConsumer->setContextOption(MUST_BE_FRESH_S, true);
+      audioinfoConsumer->setContextOption(RIGHTMOST_CHILD, true);
+//      audioinfoConsumer->setContextOption(DEFAULT_MAX_SUFFIX_COMP, 1);
       audioinfoConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
-        (InterestCallback)bind(&ConsumerCallback::processLeavingInterest, &cb_consumer, _1));
+        (InterestCallback)bind(&ConsumerCallback::processLeavingStreaminfo, &cb_consumer, _1));
       audioinfoConsumer->setContextOption(CONTENT_RETRIEVED, 
         (ContentCallback)bind(&ConsumerCallback::processStreaminfoAudio, &cb_consumer, _1, _2));
+      audioinfoConsumer->setContextOption(DATA_ENTER_CNTX, 
+        (DataCallback)bind(&ConsumerCallback::streaminfoEnterAudio, &cb_consumer, _1));
 
-      audioinfoConsumer->consume(Name());
+      if(argc > 1)
+        audioinfoConsumer->consume(Name(argv[1]));
+      else
+        audioinfoConsumer->consume(Name(""));
 
 //      sleep(1); // because consume() is non-blocking
       std::cout << "consume whole start!" <<std::endl;
