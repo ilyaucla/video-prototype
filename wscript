@@ -60,17 +60,17 @@ def build(bld):
 #        export_includes="src",
 #        )
   
-    bld(target="producer_e",
-        features=["cxx", "cxxprogram"],
-        source= "src/producer_e.cpp src/producer-callback.cpp",
-        use='BOOST NDN_CXX PTHREAD',
-        )
-
-    bld(target="file_pro",
-        features=["cxx", "cxxprogram"],
-        source= "src/file_pro.cpp src/producer-callback.cpp",
-        use='BOOST NDN_CXX',
-        )
+#    bld(target="producer_e",
+#        features=["cxx", "cxxprogram"],
+#        source= "src/producer_e.cpp src/producer-callback.cpp",
+#        use='BOOST NDN_CXX PTHREAD',
+#        )
+#
+#    bld(target="file_pro",
+#        features=["cxx", "cxxprogram"],
+#        source= "src/file_pro.cpp src/producer-callback.cpp",
+#        use='BOOST NDN_CXX',
+#        )
 
     bld(target="producer",
         features=["cxx", "cxxprogram"],
@@ -78,11 +78,11 @@ def build(bld):
         use='GSTREAMER BOOST NDN_CXX PTHREAD',
         )
 
-    bld(target="consumer_e",
-        features=["cxx", "cxxprogram"],
-        source= "src/consumer_e.cpp src/consumer-callback.cpp src/video-player.cpp",
-        use='GSTREAMER BOOST NDN_CXX PTHREAD',
-        )
+#    bld(target="consumer_e",
+#        features=["cxx", "cxxprogram"],
+#        source= "src/consumer_e.cpp src/consumer-callback.cpp src/video-player.cpp",
+#        use='GSTREAMER BOOST NDN_CXX PTHREAD',
+#        )
       
     bld(target="consumer",
         features=["cxx", "cxxprogram"],
@@ -90,17 +90,17 @@ def build(bld):
         use='GSTREAMER BOOST NDN_CXX PTHREAD',
         )
       
-    bld(target="file_con",
-        features=["cxx", "cxxprogram"],
-        source= "src/file_con.cpp src/video-player.cpp src/consumer-callback.cpp",
-        use='PTHREAD GSTREAMER BOOST NDN_CXX',
-        )
-
-    bld(target="test",
-        features=["cxx", "cxxprogram"],
-        source= "src/test.cpp",
-        args = ['-pthread'],
-        )
+#    bld(target="file_con",
+#        features=["cxx", "cxxprogram"],
+#        source= "src/file_con.cpp src/video-player.cpp src/consumer-callback.cpp",
+#        use='PTHREAD GSTREAMER BOOST NDN_CXX',
+#        )
+#
+#    bld(target="test",
+#        features=["cxx", "cxxprogram"],
+#        source= "src/test.cpp",
+#        args = ['-pthread'],
+#        )
 
     # Tests
     if bld.env['WITH_TESTS']:

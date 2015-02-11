@@ -23,9 +23,9 @@ namespace ndn {
     std::cout << "｡:.ﾟヽ(*´∀`)ﾉﾟ. Test Result ヽ(✿ﾟ▽ﾟ)ノ  " << std::endl;
     std::cout << "  " << std::endl;
     std::cout << "-------- Throughput --------  " << std::endl;
-    std::cout << "Video Bytes: " << pro_video.throughput << "  Payload_Throughput: " << pro_video.throughput/seconds << " Bytes/Seconds" <<std::endl;
-    std::cout << "Audio Bytes: " << pro_audio.throughput << "  Payload_Throughput: " << pro_audio.throughput/seconds << " Bytes/Seconds" <<std::endl;
-    std::cout << "Total Bytes: " << pro_video.throughput + pro_audio.throughput << "  Payload_Throughput: " << (pro_video.throughput + pro_audio.throughput)/seconds << " Bytes/Seconds" << std::endl;
+    std::cout << "Video Bytes: " << std::dec << pro_video.throughput << "  Payload_Throughput: " << std::dec << pro_video.throughput/seconds << " Bytes/Seconds" <<std::endl;
+    std::cout << "Audio Bytes: " << std::dec << pro_audio.throughput << "  Payload_Throughput: " << std::dec << pro_audio.throughput/seconds << " Bytes/Seconds" <<std::endl;
+    std::cout << "Total Bytes: " << std::dec << pro_video.throughput + pro_audio.throughput << "  Payload_Throughput: " << std::dec << (pro_video.throughput + pro_audio.throughput)/seconds << " Bytes/Seconds" << std::endl;
 
     unsigned long interest_in = pro_video.streaminfoCB.interest_incoming + pro_video.sampleCB.interest_incoming + pro_audio.streaminfoCB.interest_incoming + pro_audio.sampleCB.interest_incoming;
     unsigned long interest_out = pro_video.streaminfoCB.interest_outgoing + pro_video.sampleCB.interest_outgoing + pro_audio.streaminfoCB.interest_outgoing + pro_audio.sampleCB.interest_outgoing;
@@ -33,9 +33,9 @@ namespace ndn {
 
     std::cout << "  " << std::endl;
     std::cout << "-------- Interest --------  " << std::endl;
-    std::cout << "Interest_Incoming: " << interest_in << "  Interest_Incoming_Speed: " << interest_in/seconds << "/Seconds" << std::endl; 
-    std::cout << "Interest_Outgoing: " << interest_out << "  Interest_Outgoing_Speed: " << interest_out/seconds << "/Seconds" << std::endl; 
-    std::cout << "Interest_Nohit: " << interest_noh << "  Interest_Nohit_Speed: " << interest_noh/seconds << "/Seconds" << std::endl; 
+    std::cout << "Interest_Incoming: " << std::dec << interest_in << "  Interest_Incoming_Speed: " << std::dec << interest_in/seconds << "/Seconds" << std::endl; 
+    std::cout << "Interest_Outgoing: " << std::dec << interest_out << "  Interest_Outgoing_Speed: " << std::dec << interest_out/seconds << "/Seconds" << std::endl; 
+    std::cout << "Interest_Nohit: " << std::dec << interest_noh << "  Interest_Nohit_Speed: " << std::dec << interest_noh/seconds << "/Seconds" << std::endl; 
     std::cout << "  " << std::endl;
     std::cout << "---------- OVER ----------  " << seconds <<" seconds" << std::endl;
    

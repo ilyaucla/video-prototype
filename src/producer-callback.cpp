@@ -61,8 +61,8 @@ namespace ndn {
     Name streaminfoSuffix(Name(interest.getName().get(-1).toUri()).append(std::to_string(*m_curnum)));
 //    Name streaminfoSuffix("");
     m_producer->produce(streaminfoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size()+1); 
-    std::cout << "produce " << type << " streaminfo AGAIN " << streaminfo << std::endl;
-    std::cout << "streaminfo size "<< streaminfo.size() + 1 << std::endl;
+//    std::cout << "produce " << type << " streaminfo AGAIN " << streaminfo << std::endl;
+//    std::cout << "streaminfo size "<< streaminfo.size() + 1 << std::endl;
   }
 
   /* When the request can't be satisfied from the content store */
@@ -107,7 +107,7 @@ namespace ndn {
   ProducerCallback::processOutgoingStreaminfo(const Data& data)
   {
   //  interest_outgoing ++;
-    std::cout << "OutgoingStreaminfo Name" << data.getName() << std::endl;
+    std::cout << "OutgoingStreaminfo Name: " << data.getName() << std::endl;
   //    std::cout << data.getFinalBlockId() << std::endl;
   }
  

@@ -132,9 +132,9 @@ private:
                       (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &(pro->streaminfoCB), _1));
         streaminfoProducer->setContextOption(DATA_LEAVE_CNTX,
                       (ConstDataCallback)bind(&ProducerCallback::processOutgoingStreaminfo, &(pro->streaminfoCB), _1));
-        streaminfoProducer->setContextOption(INTEREST_TO_PROCESS,
+        streaminfoProducer->setContextOption(CACHE_MISS,
                       (ConstInterestCallback)bind(&ProducerCallback::processStreaminfoInterest, &(pro->streaminfoCB), _1));
-        streaminfoProducer->setup();
+        streaminfoProducer->attach();
 
 //        Signer signer;
         Name videoName_content(pro->filename + "/" + pro->name + "/content");
@@ -159,9 +159,9 @@ private:
                         (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &(pro->sampleCB), _1));
         sampleProducer->setContextOption(DATA_LEAVE_CNTX,
             (ConstDataCallback)bind(&ProducerCallback::processOutgoingData, &(pro->sampleCB), _1));
-        sampleProducer->setContextOption(INTEREST_TO_PROCESS,
+        sampleProducer->setContextOption(CACHE_MISS,
                           (ConstInterestCallback)bind(&ProducerCallback::processInterest, &(pro->sampleCB), _1));
-        sampleProducer->setup();          
+        sampleProducer->attach();          
         
         do {
           g_signal_emit_by_name (pro->sink, "pull-sample", &sample);
@@ -183,6 +183,7 @@ private:
               pro->streaminfoCB.setStreaminfoAudio(streaminfo); 
             }
 
+//            Name streaminfoSuffix("");
             Name streaminfoSuffix(std::to_string(samplenumber));
             streaminfoProducer->produce(streaminfoSuffix, (uint8_t *)streaminfo.c_str(), streaminfo.size()+1);
 //            std::cout << "produce " << pro->name << " streaminfo OK" << streaminfo << std::endl;

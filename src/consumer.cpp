@@ -52,9 +52,9 @@ namespace ndn {
 //      std::cout<<filename<<std::endl;
 
       Name videoinfoName(filename + "/video/streaminfo");
-      Consumer* videoinfoConsumer = new Consumer(videoinfoName, RELIABLE, DATAGRAM );
+      Consumer* videoinfoConsumer = new Consumer(videoinfoName, SDR);
       videoinfoConsumer->setContextOption(MUST_BE_FRESH_S, true);
-      videoinfoConsumer->setContextOption(RIGHTMOST_CHILD, true);
+//      videoinfoConsumer->setContextOption(RIGHTMOST_CHILD_S, true);
 //      videoinfoConsumer->setContextOption(DEFAULT_MAX_SUFFIX_COMP, 1);
       videoinfoConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
         (InterestCallback)bind(&ConsumerCallback::processLeavingStreaminfo, &cb_consumer, _1));
@@ -69,9 +69,9 @@ namespace ndn {
         videoinfoConsumer->consume(Name(""));
 
       Name audioinfoName(filename + "/audio/streaminfo");
-      Consumer* audioinfoConsumer = new Consumer(audioinfoName, RELIABLE, DATAGRAM );
+      Consumer* audioinfoConsumer = new Consumer(audioinfoName, SDR);
       audioinfoConsumer->setContextOption(MUST_BE_FRESH_S, true);
-      audioinfoConsumer->setContextOption(RIGHTMOST_CHILD, true);
+//      audioinfoConsumer->setContextOption(RIGHTMOST_CHILD_S, true);
 //      audioinfoConsumer->setContextOption(DEFAULT_MAX_SUFFIX_COMP, 1);
       audioinfoConsumer->setContextOption(INTEREST_LEAVE_CNTX, 
         (InterestCallback)bind(&ConsumerCallback::processLeavingStreaminfo, &cb_consumer, _1));
