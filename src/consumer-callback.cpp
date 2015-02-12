@@ -28,8 +28,8 @@ namespace ndn {
   void
   ConsumerCallback::processPayload(const uint8_t* buffer, size_t bufferSize)
   {
-    std::cout << "video times processPayload " << std::dec << times_video <<std::endl;
-    std::cout << "video Size:" << std::dec << bufferSize <<std::endl;
+//    std::cout << "video times processPayload " << std::dec << times_video <<std::endl;
+//    std::cout << "video Size:" << std::dec << bufferSize <<std::endl;
 //    std::cout << "video bufferSize " << bufferSize <<std::endl;
 //    std::cout << "@buffer " << &buffer <<std::endl;
     payload_v += bufferSize;
@@ -41,8 +41,8 @@ namespace ndn {
   void
   ConsumerCallback::processPayloadAudio(const uint8_t* buffer, size_t bufferSize)
   {
-    std::cout << "audio times processPayload " << std::dec << times_audio <<std::endl;
-    std::cout << "audio Size:" << std::dec << bufferSize <<std::endl;
+//    std::cout << "audio times processPayload " << std::dec << times_audio <<std::endl;
+//    std::cout << "audio Size:" << std::dec << bufferSize <<std::endl;
 //    std::cout << "audio bufferSize " << bufferSize <<std::endl;
 //    std::cout << "@buffer " << &buffer <<std::endl;
     payload_a += bufferSize;

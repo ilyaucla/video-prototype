@@ -1,7 +1,7 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
  * Copyright (c) 2014 Regents of the University of California.
- *
+ * video-player: play video & audio together
  * @author Lijing Wang <phdloli@ucla.edu>
  */
 
@@ -85,13 +85,6 @@ namespace ndn {
 //           break;
         }
         pthread_mutex_unlock(&(app->count_mutex));
-//        if( (app -> dataQue).size() == 0  )
-//        {
-//          usleep(1000000);
-//          if(app->rate == 44)
-//            std::cout<< "audioQueue EMPTY!!" << std::endl;
-//          return TRUE; 
-//        }
         
         std::cout << "ReadratePUSH !" << app->rate << std::endl;
         std::cout << "queueSize !" << (app->dataQue).size() << std::endl;
@@ -117,18 +110,9 @@ namespace ndn {
       read_data (App * app)
       {
         GstFlowReturn ret;
-//        pthread_mutex_lock(&(app->count_mutex));
-//        while((app -> dataQue).size() == 0 )
-//        {
-//           pthread_cond_wait(&(app->count_cond), &(app->count_mutex));
-//        }
-//        pthread_mutex_unlock(&(app->count_mutex));
 
         if( (app -> dataQue).size() == 0  )
         {
-////          usleep(1000);
-////          if(app->rate == 44)
-////            std::cout<< "audioQueue EMPTY!!" << std::endl;
           return TRUE; 
         }
         

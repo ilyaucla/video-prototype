@@ -6,7 +6,6 @@
  */
 
 #include "video-generator.hpp" 
-//#include <iostream>
 // Enclosing code in ndn simplifies coding (can also use `using namespace ndn`)
 namespace ndn {
 // Additional nested namespace could be used to prevent/limit name contentions
@@ -15,6 +14,7 @@ namespace ndn {
   VideoGenerator::Producer_Need pro_video;
   VideoGenerator::Producer_Need pro_audio;
 
+  //when control-c detected, doing the analysis 
   static void sig_int(int num)
   {
     time_t time_end = std::time(0);
@@ -47,56 +47,15 @@ namespace ndn {
   {
     try {
       
-//  		std::string filename = "/Users/Lijing/Movies/";
-//
-//  		if (argc >= 2)
-//  			filename += argv[1];
-//  		else
-//  			filename += "duoyan.mp4";
-//  
-     
-      /* streaminfoSampleProducer */
-//      Producer* audioinfoProducer = new Producer(videoName);
-//      cb_producer.setProducer(audioinfoProducer); // needed for some callback functionality
-//      audioinfoProducer->setContextOption(DATA_LEAVE_CNTX,
-//          (ConstDataCallback)bind(&ProducerCallback::processOutgoingData, &cb_producer, _1));
-//      audioinfoProducer->setup();
-//
-//      
-//      Producer* sampleProducer = new Producer(videoName2);
-//      cb_producer.setProducer(sampleProducer); // needed for some callback functionality
-//      sampleProducer->setContextOption(DATA_TO_SECURE,
-//                      (DataCallback)bind(&Signer::onPacket, &signer, _1));
-//      sampleProducer->setContextOption(SND_BUF_SIZE,100000);
-//      sampleProducer->setContextOption(DATA_LEAVE_CNTX,
-//          (ConstDataCallback)bind(&ProducerCallback::processOutgoingData, &cb_producer, _1));
-//      sampleProducer->setContextOption(INTEREST_ENTER_CNTX,
-//                        (ConstInterestCallback)bind(&ProducerCallback::processIncomingInterest, &cb_producer, _1));
-//      sampleProducer->setup();
-
-//      generator.h264_generate_whole(filename);
       VideoGenerator generator;
       std::string filename = "/ndn/edu/ucla/capture";
       
       signal(SIGINT, sig_int);
       time_start = std::time(0);
+      //call videogenerator
       generator.h264_generate_capture(filename, &pro_video, &pro_audio);
 
       std::cout << "ε٩(๑> ₃ <)۶з" << std::endl;
-
-//      generator.h264_generate_frames(filename, frameProducer);
-//      generator.playbin_generate_frames(filename, frameProducer);
-//      There is no need for callback now 
-//      ProducerCallback cb_producer;
-//      
-//      buffer = generator.generateVideoOnce(filename, size);
-//
-//      Name wholeSuffix;
-//      frameProducer->produce(wholeSuffix, (uint8_t*)buffer, size);
-
-//      sleep(30000); // because setup() is non-blocking
-      
-//      std::cout << "HERE!!" << std::endl;
 
     }
     catch(std::exception& e) {

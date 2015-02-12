@@ -1,7 +1,9 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
  * Copyright (c) 2014 Regents of the University of California.
- *
+ * 
+ * video-generator: capture video & audio then publish them
+ * 
  * @author Lijing Wang <phdloli@ucla.edu>
  */
 
@@ -11,10 +13,6 @@
 // Enclosing code in ndn simplifies coding (can also use `using namespace ndn`)
 namespace ndn {
 // Additional nested namespace could be used to prevent/limit name contentions
-
-//  gsize throughput_v;
-//  gsize throughput_a;
-
 
 
   VideoGenerator::VideoGenerator()
