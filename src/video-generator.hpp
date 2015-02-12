@@ -169,7 +169,7 @@ private:
             g_print("Meet the EOS!\n");
             break;
             }
-          if ( samplenumber % 100 == 0)
+          if ( samplenumber == 0)
           {
             caps = gst_sample_get_caps(sample);
             streaminfo = gst_caps_to_string(caps);
